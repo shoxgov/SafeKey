@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.qingwing.safekey.view.TitleBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:rightBtnBackground="@mipmap/bluetooth_online"
+        app:showLeftBtn="false"
+        app:showRightBtn="true"
+        app:titleBackground="@color/blue"
+        app:titleName="操作列表"
+        app:titleTextColor="@color/white" />
+
+    <TextView
+        android:id="@+id/bt_handle_text_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dip"
+        android:text="" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dip"
+        android:background="@color/line_color" />
+
+    <EditText
+        android:id="@+id/bt_handle_test"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:hint="测试指令"
+        android:padding="5dip" />
+
+    <Button
+        android:id="@+id/bt_handle_test_bt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="发送测试指令" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:overScrollMode="never"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+
+            <ListView
+                android:id="@+id/bt_handle_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="10dip"
+                android:background="@color/line_color" />
+
+            <EditText
+                android:id="@+id/bt_handle_edit"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="@null"
+                android:gravity="top"
+                android:minLines="5"
+                android:padding="5dip"
+                android:text=""
+                android:textColor="@color/textblack" />
+        </LinearLayout>
+    </ScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="10dip"
+        android:background="@color/line_color" />
+
+    <TextView
+        android:id="@+id/bt_handle_disconnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/bluetheme"
+        android:gravity="center"
+        android:paddingBottom="10dip"
+        android:paddingTop="10dip"
+        android:text="断开连接"
+        android:textColor="@color/white" />
+
+</LinearLayout>

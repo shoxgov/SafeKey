@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CircleImageView">
+        <attr name="border_width" format="dimension" />
+        <attr name="border_color" format="color" />
+        <attr name="border_overlay" format="boolean" />
+    </declare-styleable>
+    <!--name为声明的"属性集合"名，可以随便取，但是最好是设置为跟我们的View一样的名称-->
+    <declare-styleable name="TitleBar">
+        <!--声明我们的属性，名称为default_size,取值类型为尺寸类型（dp,px等）-->
+        <attr name="showLeftBtn" format="boolean" />
+        <attr name="showRightBtn" format="boolean" />
+        <attr name="leftBtnText" format="string" />
+        <attr name="leftBtnTextcolor" format="color" />
+        <attr name="rightBtnText" format="string" />
+        <attr name="leftBtnBackground" format="reference" />
+        <attr name="rightBtnBackground" format="reference" />
+        <attr name="titleBackground" format="color" />
+        <attr name="rightBtnTextcolor" format="color" />
+        <attr name="titleTextColor" format="color" />
+        <attr name="titleName" format="string" />
+    </declare-styleable>
+    <declare-styleable name="RecyclerView">
+        <!--声明我们的属性，名称为default_size,取值类型为尺寸类型（dp,px等）-->
+        <attr name="swipeHeaderFresh" format="boolean" />
+        <attr name="swipeFooterFresh" format="boolean" />
+        <attr name="dividerColor" format="color" />
+        <attr name="dividerDrawable" format="reference" />
+        <attr name="dividerHeight" format="dimension" />
+        <attr name="itemlayout" format="reference" />
+    </declare-styleable>
+    <!--TabIndicator的参数设置 仿今日头条导航栏-->
+    <declare-styleable name="PagerSlidingTab">
+        <attr name="indicatorColor" format="color" />
+        <attr name="underlineColor" format="color" />
+        <attr name="PagerDividerColor" format="color" />
+        <attr name="indicatorHeight" format="dimension" />
+        <attr name="underlineHeight" format="dimension" />
+        <attr name="pst_dividerPadding" format="dimension" />
+        <attr name="tabPaddingLeftRight" format="dimension" />
+        <attr name="scrollOffset" format="dimension" />
+        <attr name="tabBackgrounds" format="reference" />
+        <attr name="sameLine" format="boolean" />
+        <attr name="pst_textAllCaps" format="boolean" />
+    </declare-styleable>
+    <!-- 圆形控件 分为圆形，圆角， -->
+    <declare-styleable name="RoundImageView">
+        <attr name="type" format="enum">
+            <enum name="circle" value="1"/>
+            <enum name="round" value="2"/>
+        </attr>
+        <attr name="radius" format="dimension"/>
+    </declare-styleable>
+</resources>

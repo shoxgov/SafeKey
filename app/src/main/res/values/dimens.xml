@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 通用 font 字体 -->
+    <dimen name="font_max">36dip</dimen>
+    <dimen name="font_huge">24dip</dimen>
+    <dimen name="font_large">18dip</dimen>
+    <dimen name="font_normal">16dip</dimen>
+    <dimen name="font_small">14dip</dimen>
+    <dimen name="font_tiny">12dip</dimen>
+    <dimen name="font_mini">10dip</dimen>
+    <!-- 通用 line 分割线 -->
+    <dimen name="line_height">0.5dp</dimen>
+    <!-- 通用 title 高度 -->
+    <dimen name="title_height">45dp</dimen>
+    <!-- 通用 icon 头像 -->
+    <dimen name="icon_qr_width">150dip</dimen>
+    <dimen name="icon_certify_width">250dip</dimen>
+    <dimen name="icon_certify_height">120dip</dimen>
+    <dimen name="broker_layout">90dip</dimen>
+    <dimen name="icon_max">70dp</dimen>
+    <dimen name="icon_huge">60dp</dimen>
+    <dimen name="icon_large">50dp</dimen>
+    <dimen name="icon_normal">40dp</dimen>
+    <dimen name="icon_small">35dp</dimen>
+    <dimen name="icon_tiny">30dp</dimen>
+    <!-- 通用 img 图片 -->
+    <dimen name="img_max">85dip</dimen>
+    <dimen name="img_huge">75dip</dimen>
+    <dimen name="img_large">65dip</dimen>
+    <dimen name="img_normal">55dip</dimen>
+    <dimen name="img_small">45dip</dimen>
+    <dimen name="img_tiny">35dip</dimen>
+    <!-- 通用 margin 外边距 -->
+    <dimen name="margin_max">40dp</dimen>
+    <dimen name="margin_huge">30dp</dimen>
+    <dimen name="margin_large">20dp</dimen>
+    <dimen name="margin_normal">15dp</dimen>
+    <dimen name="margin_small">10dp</dimen>
+    <dimen name="margin_tiny">5dp</dimen>
+    <!-- 通用 padding 内边距 -->
+    <dimen name="padding_max">40dp</dimen>
+    <dimen name="padding_huge">30dp</dimen>
+    <dimen name="padding_large">20dp</dimen>
+    <dimen name="padding_normal">15dp</dimen>
+    <dimen name="padding_small">10dp</dimen>
+    <dimen name="padding_tiny">5dp</dimen>
+    <!-- 通用 item 高度 -->
+    <dimen name="item_max">75dp</dimen>
+    <dimen name="item_huge">65dp</dimen>
+    <dimen name="item_large">55dp</dimen>
+    <dimen name="item_normal">45dp</dimen>
+    <dimen name="item_small">35dp</dimen>
+    <dimen name="item_tiny">25dp</dimen>
+</resources>

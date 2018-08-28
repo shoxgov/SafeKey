@@ -1,0 +1,102 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/blue"
+    android:orientation="vertical">
+
+    <com.qingwing.safekey.view.TitleBar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:titleBackground="@color/textblack"
+        app:titleName="服务器设置"
+        app:titleTextColor="@color/white" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="2" />
+
+    <ImageView
+        android:layout_width="85dip"
+        android:layout_height="85dip"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="15dip"
+        android:src="@mipmap/ic_launcher" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="2" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginTop="10dip"
+        android:text="IP地址:"
+        android:textColor="@color/white"
+        android:textSize="@dimen/font_normal" />
+
+    <EditText
+        android:id="@+id/host_ip_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:layout_marginTop="10dip"
+        android:background="@drawable/edittext_background"
+        android:hint="请输入服务器IP,如192.68.1.1"
+        android:padding="5dip" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginTop="20dip"
+        android:text="端口号:"
+        android:textColor="@color/white"
+        android:textSize="@dimen/font_normal" />
+
+    <EditText
+        android:id="@+id/host_port_edit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:layout_marginTop="10dip"
+        android:background="@drawable/edittext_background"
+        android:padding="5dip"
+        android:text="8080" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="2" />
+
+    <TextView
+        android:id="@+id/btn_ok"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/input_layout"
+        android:layout_centerInParent="true"
+        android:layout_marginLeft="20dip"
+        android:layout_marginRight="20dip"
+        android:layout_marginTop="30dip"
+        android:background="@drawable/radius_login_bg"
+        android:gravity="center"
+        android:padding="5dip"
+        android:text="设置"
+        android:textColor="@color/white"
+        android:textSize="18sp" />
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="8" />
+</LinearLayout>

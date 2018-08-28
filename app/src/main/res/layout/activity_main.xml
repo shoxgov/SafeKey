@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context="com.qingwing.safekey.activity.MainActivity">
+
+    <FrameLayout
+        android:id="@+id/fl_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottomRg"
+        android:background="@color/white" />
+
+    <RadioGroup
+        android:id="@+id/bottomRg"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="1dip"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:paddingBottom="3dip"
+        android:paddingTop="3dip">
+
+        <RadioButton
+            android:id="@+id/rb_home"
+            style="@style/rg_btn_style"
+            android:checked="true"
+            android:drawableTop="@drawable/main_home_selector"
+            android:text="@string/homepage" />
+
+        <RadioButton
+            android:id="@+id/rb_employ"
+            style="@style/rg_btn_style"
+            android:drawableTop="@drawable/main_employ_selector"
+            android:text="@string/enroll" />
+
+        <RadioButton
+            android:id="@+id/rb_msg"
+            style="@style/rg_btn_style"
+            android:drawableTop="@drawable/main_msg_selector"
+            android:text="@string/community"/>
+
+        <RadioButton
+            android:id="@+id/rb_my"
+            style="@style/rg_btn_style"
+            android:drawableTop="@drawable/main_my_selector"
+            android:text="@string/personal" />
+    </RadioGroup>
+
+    <!--<android.support.v7.widget.LinearLayoutCompat
+        android:id="@+id/ll_bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:background="@android:color/white"
+        android:orientation="horizontal"
+        app:divider="@android:color/holo_red_dark"
+        app:dividerPadding="3dp"
+        app:showDividers="middle">
+
+        <TextView
+            android:id="@+id/tv_bottom_nav_1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="首页" />
+
+
+        <TextView
+            android:id="@+id/tv_bottom_nav_2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="招聘" />
+
+
+        <TextView
+            android:id="@+id/tv_bottom_nav_3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="消息" />
+
+        <TextView
+            android:id="@+id/tv_bottom_nav_4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="我的" />
+
+    </android.support.v7.widget.LinearLayoutCompat>-->
+</RelativeLayout>

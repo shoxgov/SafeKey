@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">智慧安全锁</string>
+
+
+    <string name="download_success">下载成功</string>
+    <string name="file_does_not_exist">文件不存在</string>
+    <string name="back_abnormal_results">数据返回异常</string>
+    <string name="back_parse_exception">数据解析异常</string>
+
+
+    <string name="homepage">首页</string>
+    <string name="enroll">招聘</string>
+    <string name="community">消息</string>
+    <string name="personal">我的</string>
+
+</resources>
