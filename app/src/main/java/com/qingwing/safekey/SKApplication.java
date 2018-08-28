@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 
+import com.tencent.bugly.Bugly;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +36,7 @@ public class SKApplication extends Application {
     @Override
     public void onCreate() {
         mContext = this;
+        Bugly.init(getApplicationContext(), "22b11594bb", true);
         super.onCreate();
     }
 

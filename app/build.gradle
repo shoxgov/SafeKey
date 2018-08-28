@@ -29,6 +29,7 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:26+'
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     testImplementation 'junit:junit:4.12'
+    compile 'com.tencent.bugly:crashreport_upgrade:latest.release'
     compile 'com.jakewharton:butterknife:7.0.0'
     //其中latest.release指代最新版本号，也可以指定明确的版本号，例如1.0.0
     compile 'com.android.support:design:26+'

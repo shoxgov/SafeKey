@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">智慧安全锁</string>
-
+    <string name="versionCode">1</string>
+    <string name="versionName">1.0.0</string>
 
     <string name="download_success">下载成功</string>
     <string name="file_does_not_exist">文件不存在</string>
