@@ -77,7 +77,7 @@ public class NetWorkConfig {
      * rows	是	每页记录数
      * page	是	页数
      */
-    public static String OBTAIN_OFFLINE_AUTHORY_INFO = "/SmartLock/Phone1_1!geRoomcard.action";
+    public static String OBTAIN_OFFLINE_AUTHORY_SAVE = "/SmartLock/Phone1_1!saveRoomcard.action";
     /**
      * 提交离线授权结果
      */
@@ -109,5 +109,5 @@ public class NetWorkConfig {
     /**
      * 离线删除授权用户信息
      */
-    public static String OFFLINE_DEL_AUTHORY_USERINFO = "/SmartLock/Phone1_1!geRoomcard.action";
+    public static String OFFLINE_DEL_AUTHORY_USERINFO = "/SmartLock/Phone1_1!getRoomcard.action";
 }

@@ -6,14 +6,14 @@ package com.qingwing.safekey.bean;
  */
 
 public class OfflineDelAuthoryRoomBack {
-    private int roombacktype;
+    private String roombacktype;
     private String roombackid;
 
-    public int getRoombacktype() {
+    public String getRoombacktype() {
         return roombacktype;
     }
 
-    public void setRoombacktype(int roombacktype) {
+    public void setRoombacktype(String roombacktype) {
         this.roombacktype = roombacktype;
     }
 

@@ -35,10 +35,28 @@ public class OfflineDelAuthoryUserInfoResponse extends BaseResponse {
     }
 
     public class DelAuthoryUserInfo{
+        private String sqtype;
+        private String sqid;
         private String personcode;
         private String personname;
         private String sqcode;
         private String sqdate;
+
+        public String getSqtype() {
+            return sqtype;
+        }
+
+        public void setSqtype(String sqtype) {
+            this.sqtype = sqtype;
+        }
+
+        public String getSqid() {
+            return sqid;
+        }
+
+        public void setSqid(String sqid) {
+            this.sqid = sqid;
+        }
 
         public String getPersoncode() {
             return personcode;

@@ -525,12 +525,12 @@ public class BluetoothService extends Service {
             LogUtil.d(TAG + " writeCommandToBle dataCharacterstic=null");
             return;
         }
-        String command = writeCommand.remove(0);
+        String command = writeCommand.remove(0).toUpperCase();
         LogUtil.d(TAG + " obtain command=" + command);
         //////////////////
         byte[] encryption = BlueDeviceUtils.hexStringToBinary(command);
 //        byte[] encryption = BlueDeviceUtils.Encryption(bts1);
-        LogUtil.d(TAG + " length=" + encryption.length + " command=" + BlueDeviceUtils.binaryToHexString(encryption));
+        LogUtil.d(TAG + " length=" + encryption.length + " command binary=" + BlueDeviceUtils.binaryToHexString(encryption));
         if (encryption.length > 20) {
             int count = encryption.length / 20;
             int yu = encryption.length % 20;

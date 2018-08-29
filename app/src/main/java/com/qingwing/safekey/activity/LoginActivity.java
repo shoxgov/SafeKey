@@ -102,7 +102,7 @@ public class LoginActivity extends BaseActivity {
             startActivity(setting);
             return;
         }
-        NetWorkConfig.HTTPS = "https://s.keenzy.cn";
+        NetWorkConfig.HTTPS = "https://" + ips + ":" + port;//"https://s.keenzy.cn";
         requestRSAkey();
     }
 
@@ -236,8 +236,8 @@ public class LoginActivity extends BaseActivity {
                     ToastUtil.showText("请先设置服务器IP");
                     return;
                 }
-                NetWorkConfig.HTTPS = "https://s.keenzy.cn";
-//                NetWorkConfig.HTTPS = "https://" + ips + ":" + port;
+//                NetWorkConfig.HTTPS = "https://s.keenzy.cn";
+                NetWorkConfig.HTTPS = "https://" + ips + ":" + port;
                 if (TextUtils.isEmpty(username)) {
                     ToastUtil.showText("请输入用户名");
                     return;

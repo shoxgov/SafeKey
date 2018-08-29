@@ -5,14 +5,19 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
+import com.qingwing.safekey.adapter.AuthoryAdapter;
+import com.qingwing.safekey.adapter.DelAuthoryAdapter;
+import com.qingwing.safekey.bean.OfflineAuthoryUserInfo;
 import com.qingwing.safekey.bean.OfflineDelAuthoryRoomBack;
 import com.qingwing.safekey.dialog.AffirmDialog;
 import com.qingwing.safekey.imp.DialogCallBack;
@@ -25,6 +30,7 @@ import com.qingwing.safekey.okhttp3.response.OfflineDelAuthoryUserInfoResponse;
 import com.qingwing.safekey.okhttp3.response.OrderResponse;
 import com.qingwing.safekey.utils.SerializationDefine;
 import com.qingwing.safekey.utils.ToastUtil;
+import com.qingwing.safekey.utils.Utils;
 import com.qingwing.safekey.view.TitleBar;
 
 import java.util.ArrayList;
@@ -46,8 +52,10 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
     RadioGroup settleRg;
     @Bind(R.id.offline_del_search_edit)
     EditText searchEdit;
-    @Bind(R.id.offline_del_result_edit)
-    EditText resultEdit;
+    //    @Bind(R.id.offline_del_result_edit)
+//    EditText resultEdit;
+    @Bind(R.id.offline_del_authory_info_list)
+    ListView infoList;
     /**
      * 请求的页数，从第1页开始
      * 每一页请求数固定10
@@ -56,6 +64,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
     private int totalPage = -1;
     private int pageSize = 100;
     private String roomid;
+    private DelAuthoryAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +88,8 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
 
             }
         });
+        adapter = new DelAuthoryAdapter(this);
+        infoList.setAdapter(adapter);
         searchEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView arg0, int arg1, KeyEvent arg2) {
@@ -145,15 +156,13 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
             }
         });
     }
-    private void addAffirmDialog(OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo person) {
+
+    private void addAffirmDialog(final OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo person) {
         final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode();
         AffirmDialog warnDialog = new AffirmDialog(OfflineDeleteAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
-                String content = resultEdit.getText().toString();
-                content += info;
-                content += "\n";
-                resultEdit.setText(content);
+                adapter.addData(person);
             }
 
             @Override
@@ -183,38 +192,6 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
         });
         listDialog.show();
     }
-    /**
-     * roomback	是	取消授权信息数组
-     * roombacktype	是	取消授权类型（1（密码）,2（指纹）,3（卡片））
-     * roombackid	否	授权id
-     */
-    private void obtainOfflineDelAuthorCommand() {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("token", SKApplication.loginToken);
-        params.put("roomid", "1");
-        List<OfflineDelAuthoryRoomBack> roomback = new ArrayList<>();
-        OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
-        rb.setRoombacktype(1);
-        rb.setRoombackid("11");
-        roomback.add(rb);
-        params.put("roomback", SerializationDefine.List2Str(roomback));
-        OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY, params, OrderResponse.class, new HttpCallback() {
-            @Override
-            public void onSuccess(BaseResponse br) {
-                super.onSuccess(br);
-                if (br.getErrCode() == 0) {
-                } else {
-                    ToastUtil.showText(br.getErrMsg());
-                }
-            }
-
-            @Override
-            public void onFailure(int code, String message) {
-                super.onFailure(code, message);
-                ToastUtil.showText(message);
-            }
-        });
-    }
 
     private void submitOfflineDelAuthorResult() {
         Map<String, String> params = new HashMap<String, String>();
@@ -240,7 +217,59 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
         });
     }
 
-    @OnClick(R.id.offline_del_send)
-    public void onViewClicked() {
+    /**
+     * roomback	是	取消授权信息数组
+     * roombacktype	是	取消授权类型（1（密码）,2（指纹）,3（卡片））
+     * roombackid	否	授权id
+     */
+    @OnClick({R.id.offline_del_send, R.id.offline_del_authory_search_ok})
+    public void onViewClicked(View v) {
+        if (Utils.isFastDoubleClick()) {
+            return;
+        }
+        switch (v.getId()) {
+            case R.id.offline_del_authory_search_ok:
+                String key = searchEdit.getText().toString();
+                if (!TextUtils.isEmpty(key)) {
+                    rquestOfflineDelUser(key);
+                }
+                break;
+
+            case R.id.offline_del_send:
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("token", SKApplication.loginToken);
+                params.put("roomid", roomid);
+                List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> tempData = adapter.getData();
+                if (tempData == null || tempData.isEmpty()) {
+                    ToastUtil.showText("请添加授权用户");
+                    return;
+                }
+                List<OfflineDelAuthoryRoomBack> roomback = new ArrayList<>();
+                for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo daui : tempData) {
+                    OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
+                    rb.setRoombacktype(daui.getSqtype());
+                    rb.setRoombackid(daui.getSqid());
+                    roomback.add(rb);
+                }
+                params.put("roomback", SerializationDefine.List2Str(roomback));
+                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY, params, OrderResponse.class, new HttpCallback() {
+                    @Override
+                    public void onSuccess(BaseResponse br) {
+                        super.onSuccess(br);
+                        if (br.getErrCode() == 0) {
+
+                        } else {
+                            ToastUtil.showText(br.getErrMsg());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(int code, String message) {
+                        super.onFailure(code, message);
+                        ToastUtil.showText(message);
+                    }
+                });
+                break;
+        }
     }
 }

@@ -16,7 +16,7 @@ import java.util.List;
  * Created by mi on 16-12-22.
  */
 public class SerializationDefine {
-    public static String segSymbols = "##segSymbols##";//分割符号
+    public static String segSymbols = ",";//分割符号
 
     public static String Object2String(Object obj) {
         Preconditions.checkArgument(obj != null, "序列化对象为null");
@@ -58,6 +58,7 @@ public class SerializationDefine {
             return "";
         }
         StringBuffer stringBuffer = new StringBuffer();
+        stringBuffer.append("[");
         for (int i = 0; i < strings.length; i++) {
             if (i == 0) {
                 stringBuffer.append(strings[i]);
@@ -65,6 +66,7 @@ public class SerializationDefine {
                 stringBuffer.append(segSymbols + strings[i]);
             }
         }
+        stringBuffer.append("]");
         return stringBuffer.toString();
     }
 

@@ -110,10 +110,12 @@
             android:paddingTop="5dip"
             android:src="@mipmap/search_icon" />
 
+
         <EditText
             android:id="@+id/offline_del_search_edit"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1"
             android:background="@null"
             android:hint="输入学号/姓名查询"
             android:imeOptions="actionSearch"
@@ -123,6 +125,16 @@
             android:paddingRight="10dip"
             android:paddingTop="5dip"
             android:singleLine="true"
+            android:textSize="@dimen/font_normal" />
+
+        <TextView
+            android:id="@+id/offline_del_authory_search_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dip"
+            android:paddingRight="10dip"
+            android:text="查询"
+            android:textColor="@color/bluetheme"
             android:textSize="@dimen/font_normal" />
     </LinearLayout>
 
@@ -146,16 +158,26 @@
         android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
-    <EditText
-        android:id="@+id/offline_del_result_edit"
+    <!-- <EditText
+         android:id="@+id/offline_del_result_edit"
+         android:layout_width="match_parent"
+         android:layout_height="0dp"
+         android:layout_weight="1"
+         android:background="@null"
+         android:enabled="false"
+         android:gravity="top"
+         android:padding="5dip"
+         android:textSize="@dimen/font_normal" />-->
+
+    <ListView
+        android:id="@+id/offline_del_authory_info_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@null"
-        android:enabled="false"
-        android:gravity="top"
-        android:padding="5dip"
-        android:textSize="@dimen/font_normal" />
+        android:divider="@color/gray_dark"
+        android:dividerHeight="1dip"
+        android:listSelector="@color/transparent"
+        android:overScrollMode="never" />
 
     <View
         android:layout_width="match_parent"
@@ -166,10 +188,12 @@
         android:id="@+id/offline_del_send"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/bluetheme"
         android:gravity="center"
         android:paddingBottom="10dip"
         android:paddingTop="10dip"
-        android:text="开始下发" />
+        android:text="开始下发"
+        android:textColor="@color/white" />
 
 
 </LinearLayout>

@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
@@ -21,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
+import com.qingwing.safekey.adapter.AuthoryAdapter;
 import com.qingwing.safekey.bean.OfflineAuthoryUserInfo;
 import com.qingwing.safekey.dialog.AffirmDialog;
 import com.qingwing.safekey.dialog.WaitTool;
@@ -41,6 +43,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.DoubleAdder;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -64,12 +67,17 @@ public class OfflineAuthorizationActivity extends BaseActivity {
     TextView startTimeTv;
     @Bind(R.id.offline_authory_end_time)
     TextView endTimeTv;
+    @Bind(R.id.offline_authory_password)
+    EditText pwdEdit;
     @Bind(R.id.offline_authory_count)
     EditText countEdit;
-    @Bind(R.id.offline_authory_info_edit)
-    EditText infoEdit;
+    @Bind(R.id.offline_authory_info_list)
+    ListView infoList;
+//    @Bind(R.id.offline_authory_info_edit)
+//    EditText infoEdit;
 
     private String roomid;
+    AuthoryAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +107,8 @@ public class OfflineAuthorizationActivity extends BaseActivity {
 
             }
         });
+        adapter = new AuthoryAdapter(this);
+        infoList.setAdapter(adapter);
         searchEdit.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView arg0, int arg1, KeyEvent arg2) {
@@ -196,27 +206,42 @@ public class OfflineAuthorizationActivity extends BaseActivity {
                 }
                 Map<String, String> params2 = new HashMap<String, String>();
                 params2.put("token", SKApplication.loginToken);
-                params2.put("roomid", "1");
-                List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
-                OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
-                oui.setSdate(startTime);
-                oui.setEdate(endTime);
-                oui.setRccount(count);
-                switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
-                    case R.id.offline_authory_settle_type_1:
-                        oui.setRoomcardtype(1);
-                        oui.setPassword("123456");
-                        break;
-                    case R.id.offline_authory_settle_type_2:
-                        oui.setRoomcardtype(2);
-                        break;
-                    case R.id.offline_authory_settle_type_3:
-                        oui.setRoomcardtype(3);
-                        break;
+                params2.put("roomid", roomid);
+                List<OfflineAuthoryUserInfoResponse.AuthoryUserInfo> tempData = adapter.getData();
+                if (tempData == null || tempData.isEmpty()) {
+                    ToastUtil.showText("请添加授权用户");
+                    return;
                 }
-                roomcard.add(oui);
-                params2.put("roomid", SerializationDefine.List2Str(roomcard));
-                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_OBTAIN_USERINFO, params2, OfflineAuthoryUserInfoResponse.class, new HttpCallback() {
+                List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
+                for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : tempData) {
+                    OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
+                    oui.setSdate(startTime);
+                    oui.setEdate(endTime);
+                    oui.setRccount(count);
+                    oui.setPersoncode(aui.getPersoncode());
+                    switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
+                        case R.id.offline_authory_settle_type_1:
+                            oui.setRoomcardtype(1);
+                            String pwd = pwdEdit.getText().toString();
+                            if (TextUtils.isEmpty(pwd)) {
+                                ToastUtil.showText("请输入授权密码");
+                                return;
+                            }
+                            oui.setPassword(pwd);
+                            break;
+                        case R.id.offline_authory_settle_type_2:
+                            oui.setRoomcardtype(2);
+                            oui.setPassword("");
+                            break;
+                        case R.id.offline_authory_settle_type_3:
+                            oui.setRoomcardtype(3);
+                            oui.setPassword("");
+                            break;
+                    }
+                    roomcard.add(oui);
+                }
+                params2.put("roomcard", SerializationDefine.List2Str(roomcard));
+                OkHttpUtils.postAsyn(NetWorkConfig.OBTAIN_OFFLINE_AUTHORY_SAVE, params2, OfflineAuthoryUserInfoResponse.class, new HttpCallback() {
                     @Override
                     public void onSuccess(BaseResponse br) {
                         super.onSuccess(br);
@@ -249,7 +274,7 @@ public class OfflineAuthorizationActivity extends BaseActivity {
             public void onTimeSelect(Date date, View v) {
                 SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");// HH:mm:ss
                 String facttime = DateTimePickDialogUtil.getDateString(date, simpleDateFormat).toString();
-                SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("yyyy-MM-dd");// HH:mm:ss
+                SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("HH:mm");// HH:mm:ss
                 String tagtime = DateTimePickDialogUtil.getDateString(date, simpleDateFormat2).toString();
                 if (TextUtils.isEmpty(tagtime)) {
                     ToastUtil.showText("日期错误");
@@ -266,19 +291,16 @@ public class OfflineAuthorizationActivity extends BaseActivity {
                         break;
                 }
             }
-        }).setType(new boolean[]{true, true, true, false, false, false}).build();
+        }).setType(new boolean[]{false, false, false, true, true, false}).build();
         pvTime.show();
     }
 
-    private void addAffirmDialog(OfflineAuthoryUserInfoResponse.AuthoryUserInfo person) {
+    private void addAffirmDialog(final OfflineAuthoryUserInfoResponse.AuthoryUserInfo person) {
         final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode();
         AffirmDialog warnDialog = new AffirmDialog(OfflineAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
-                String content = infoEdit.getText().toString();
-                content += info;
-                content += "\n";
-                infoEdit.setText(content);
+                adapter.addData(person);
             }
 
             @Override

@@ -79,10 +79,10 @@ public class HostNameSettingActivity extends BaseActivity {
             ToastUtil.showText("端口号不能为空");
             return;
         }
-        if (!Utils.checkIp(ips)) {
-            ToastUtil.showText("请输入合法的IP");
-            return;
-        }
+//        if (!Utils.checkIp(ips)) {
+//            ToastUtil.showText("请输入合法的IP");
+//            return;
+//        }
         PreferenceUtil.commitString("hostIp", ips);
         PreferenceUtil.commitString("hostPort", ports);
         ToastUtil.showText("设置成功");

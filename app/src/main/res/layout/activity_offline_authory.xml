@@ -152,6 +152,7 @@
             android:text="密码" />
 
         <EditText
+            android:id="@+id/offline_authory_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
@@ -186,7 +187,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:hint="如 2016-12-12"
+            android:hint="如 00:00"
             android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
@@ -211,7 +212,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:hint="如 2016-12-12"
+            android:hint="如 23:59"
             android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
@@ -237,6 +238,7 @@
             android:layout_height="wrap_content"
             android:background="@null"
             android:hint="无"
+            android:inputType="number"
             android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
@@ -250,16 +252,27 @@
         android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
-    <EditText
-        android:id="@+id/offline_authory_info_edit"
+    <ListView
+        android:id="@+id/offline_authory_info_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@null"
-        android:enabled="false"
-        android:gravity="top"
-        android:padding="5dip"
-        android:textSize="@dimen/font_normal" />
+        android:divider="@color/gray_dark"
+        android:dividerHeight="1dip"
+        android:listSelector="@color/transparent"
+        android:overScrollMode="never" />
+    <!--
+        <EditText
+            android:id="@+id/offline_authory_info_edit"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:enabled="false"
+            android:gravity="top"
+            android:padding="5dip"
+            android:textSize="@dimen/font_normal" />
+    -->
 
     <View
         android:layout_width="match_parent"
@@ -269,9 +282,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:paddingBottom="5dip"
-        android:paddingTop="5dip">
+        android:gravity="center">
 
 
         <TextView
@@ -294,8 +305,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:background="@color/bluetheme"
             android:gravity="center"
-            android:text="开始下发" />
+            android:paddingBottom="10dip"
+            android:paddingTop="10dip"
+            android:text="开始下发"
+            android:textColor="@color/white" />
 
 
     </LinearLayout>
