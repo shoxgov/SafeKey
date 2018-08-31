@@ -33,9 +33,21 @@ public class BleObserverConstance {
      * RECEIVER_BT_SATUS:  接收状态查询回复
      */
     public static final int RECEIVER_BT_SATUS = 10118;
+    /**
+     * RECEIVER_OFFLINE_UPLOAD_RECORD:  接收离线上传记录
+     */
+    public static final int RECEIVER_OFFLINE_UPLOAD_RECORD = 10119;
 
     /**
      * GATT创建并连接成功，此时可以发指令了
      */
     public static final int ACTION_GATT_CONNECT_SUCCESS = 32222;
+    /**
+     * 离线授权用户指令下发蓝牙回复结果
+     */
+    public static final int LOCK_OFFLINE_AUTHORY_COMMAND_RESULT = 32223;
+    /**
+     * 离线删除授权用户指令下发蓝牙回复结果
+     */
+    public static final int LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT = 32224;
 }

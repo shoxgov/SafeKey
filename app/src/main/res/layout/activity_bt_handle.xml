@@ -15,7 +15,7 @@
         app:titleName="操作列表"
         app:titleTextColor="@color/white" />
 
-    <TextView
+    <!--<TextView
         android:id="@+id/bt_handle_text_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
         android:id="@+id/bt_handle_test_bt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="发送测试指令" />
+        android:text="发送测试指令" />-->
 
     <ScrollView
         android:layout_width="match_parent"

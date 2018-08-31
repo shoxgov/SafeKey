@@ -8,8 +8,8 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.qingwing.safekey.R;
-import com.qingwing.safekey.okhttp3.response.OfflineAuthoryUserInfoResponse;
 import com.qingwing.safekey.okhttp3.response.OfflineDelAuthoryUserInfoResponse;
+import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 
 import java.util.ArrayList;
@@ -31,7 +31,18 @@ public class DelAuthoryAdapter extends BaseAdapter {
     }
 
     public void addData(OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo data) {
+        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo aui : this.data) {
+            if (aui.getPersoncode().equals(data.getPersoncode())) {
+                ToastUtil.showText("重复添加");
+                return;
+            }
+        }
         this.data.add(data);
+        notifyDataSetChanged();
+    }
+
+    public void clear() {
+        this.data.clear();
         notifyDataSetChanged();
     }
 

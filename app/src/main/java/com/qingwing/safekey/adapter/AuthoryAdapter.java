@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.okhttp3.response.OfflineAuthoryUserInfoResponse;
+import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 
 import java.util.ArrayList;
@@ -30,7 +31,18 @@ public class AuthoryAdapter extends BaseAdapter {
     }
 
     public void addData(OfflineAuthoryUserInfoResponse.AuthoryUserInfo data) {
+        for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : this.data) {
+            if (aui.getPersoncode().equals(data.getPersoncode())) {
+                ToastUtil.showText("重复添加");
+                return;
+            }
+        }
         this.data.add(data);
+        notifyDataSetChanged();
+    }
+
+    public void clear() {
+        this.data.clear();
         notifyDataSetChanged();
     }
 

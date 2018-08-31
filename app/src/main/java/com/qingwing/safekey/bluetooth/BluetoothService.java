@@ -388,9 +388,9 @@ public class BluetoothService extends Service {
                     return;
                 }
                 if (temp.startsWith("BBBB")) {
-                    String commandLengthH = temp.substring(4, 6);
-                    String commandLengthL = temp.substring(6, 8);
-                    int length = BlueDeviceUtils.hexStringToInteger(commandLengthH) << 8 + BlueDeviceUtils.hexStringToInteger(commandLengthL);
+                    String commandLengthH = temp.substring(4, 8);
+//                    String commandLengthL = temp.substring(6, 8);
+                    int length = BlueDeviceUtils.hexStringToInteger(commandLengthH);
                     LogUtil.d(TAG + "BBBB总包长length=" + length);
                     if (length <= tempLenght / 2) {
                         if (BLEAnylizeManager.checkCommand(temp)) {
@@ -531,24 +531,25 @@ public class BluetoothService extends Service {
         byte[] encryption = BlueDeviceUtils.hexStringToBinary(command);
 //        byte[] encryption = BlueDeviceUtils.Encryption(bts1);
         LogUtil.d(TAG + " length=" + encryption.length + " command binary=" + BlueDeviceUtils.binaryToHexString(encryption));
-        if (encryption.length > 20) {
-            int count = encryption.length / 20;
-            int yu = encryption.length % 20;
+        int MAXLENGTH = 120;
+        if (encryption.length > MAXLENGTH) {
+            int count = encryption.length / MAXLENGTH;
+            int yu = encryption.length % MAXLENGTH;
             for (int i = 0; i < count; i++) {
-                byte[] range = Arrays.copyOfRange(encryption, 20 * i, (i + 1) * 20);
+                byte[] range = Arrays.copyOfRange(encryption, MAXLENGTH * i, (i + 1) * MAXLENGTH);
                 try {
                     dataCharacterstic.setValue(range);
                     mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-                    Thread.sleep(50);
+                    Thread.sleep(90);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                LogUtil.d(TAG + "分割传送大于20字节的数据 第" + i + "轮");
+                LogUtil.d(TAG + "分割传送大于" + MAXLENGTH + "字节的数据 第" + i + "轮");
             }
             byte[] range1 = Arrays.copyOfRange(encryption, encryption.length - yu, encryption.length);
             dataCharacterstic.setValue(range1);
             mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-            LogUtil.d(TAG + "写入大于20字节的数据成功了");
+            LogUtil.d(TAG + "写入大于" + MAXLENGTH + "字节的数据成功了");
         } else {
             dataCharacterstic.setValue(encryption);
             mBluetoothGatt.writeCharacteristic(dataCharacterstic);

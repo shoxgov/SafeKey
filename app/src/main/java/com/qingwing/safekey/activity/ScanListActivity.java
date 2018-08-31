@@ -90,6 +90,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
      */
     private String selectDeviceId = "";
     private String selectGatewayCode = "";
+    private String selectRoomid = "";
     /**
      * 创建单长期线程，用于轮询
      */
@@ -116,6 +117,13 @@ public class ScanListActivity extends BaseActivity implements Observer {
     public void update(Observable o, Object obj) {
         ObservableBean ob = (ObservableBean) obj;
         switch (ob.getWhat()) {
+            case BleObserverConstance.BOX_CONNTEC_BLE_STATUS:
+                if ((boolean) ob.getObject()) {
+                } else {
+                    ToastUtil.showText("连接失败");
+                    WaitTool.dismissDialog();
+                }
+                break;
             case BleObserverConstance.ACTION_GATT_CONNECT_SUCCESS:
 //            case BleObserverConstance.BOX_CONNTECING_BLE:
                 LogUtil.d("  BOX_CONNTECING_BLE  ");
@@ -127,6 +135,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 intent.putExtra("selectHouseId", selectHouseId);
                 intent.putExtra("selectFloorId", selectFloorId);
                 intent.putExtra("selectDeviceType", selectDeviceType);
+                intent.putExtra("luckId", selectRoomid);
                 intent.putExtra("selectDeviceId", selectDeviceId);
                 intent.putExtra("selectGatewayCode", selectGatewayCode);
                 startActivity(intent);
@@ -236,6 +245,8 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 ToastUtil.showText("刷新附近设备");
                 if (bluetoothService != null) {
                     bluetoothService.clearDeviceMap();
+                    mHandler.removeMessages(0);
+                    mHandler.sendEmptyMessage(0);
                 }
             }
 
@@ -366,6 +377,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 public void onClick(View v) {
                     selectDeviceId = bdi.getDeviceid();
                     selectGatewayCode = bdi.getGatewaycode();
+                    selectRoomid = bdi.getRcode();
                     if (bdi.isOnline()) {
                         AffirmDialog warnDialog = new AffirmDialog(ScanListActivity.this, "确定连接XXOO？".replace("XXOO", bdi.getDevicename()), new DialogCallBack() {
                             @Override

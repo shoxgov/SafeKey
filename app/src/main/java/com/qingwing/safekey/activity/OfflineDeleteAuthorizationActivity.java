@@ -2,6 +2,7 @@ package com.qingwing.safekey.activity;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -15,19 +16,26 @@ import android.widget.TextView;
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
-import com.qingwing.safekey.adapter.AuthoryAdapter;
 import com.qingwing.safekey.adapter.DelAuthoryAdapter;
-import com.qingwing.safekey.bean.OfflineAuthoryUserInfo;
+import com.qingwing.safekey.bean.CardOrderResult;
+import com.qingwing.safekey.bean.FingerOrderResult;
 import com.qingwing.safekey.bean.OfflineDelAuthoryRoomBack;
+import com.qingwing.safekey.bean.OrderResultBean;
+import com.qingwing.safekey.bean.OrderResultServerBean;
+import com.qingwing.safekey.bluetooth.BleObserverConstance;
+import com.qingwing.safekey.bluetooth.BluetoothService;
 import com.qingwing.safekey.dialog.AffirmDialog;
+import com.qingwing.safekey.dialog.WaitTool;
 import com.qingwing.safekey.imp.DialogCallBack;
 import com.qingwing.safekey.imp.TitleBarListener;
+import com.qingwing.safekey.observable.ObservableBean;
+import com.qingwing.safekey.observable.ObserverManager;
 import com.qingwing.safekey.okhttp3.http.HttpCallback;
 import com.qingwing.safekey.okhttp3.http.OkHttpUtils;
 import com.qingwing.safekey.okhttp3.response.BaseResponse;
-import com.qingwing.safekey.okhttp3.response.OfflineAuthoryUserInfoResponse;
 import com.qingwing.safekey.okhttp3.response.OfflineDelAuthoryUserInfoResponse;
 import com.qingwing.safekey.okhttp3.response.OrderResponse;
+import com.qingwing.safekey.utils.LogUtil;
 import com.qingwing.safekey.utils.SerializationDefine;
 import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
@@ -37,6 +45,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Set;
+import java.util.Vector;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -47,7 +59,7 @@ import butterknife.OnClick;
  * email:shoxgov@126.com
  */
 
-public class OfflineDeleteAuthorizationActivity extends BaseActivity {
+public class OfflineDeleteAuthorizationActivity extends BaseActivity implements Observer {
     @Bind(R.id.offline_del_settle_rg)
     RadioGroup settleRg;
     @Bind(R.id.offline_del_search_edit)
@@ -65,12 +77,16 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
     private int pageSize = 100;
     private String roomid;
     private DelAuthoryAdapter adapter;
+    private HashMap<String, OrderResultBean> orderHashMap = new HashMap<>();
+    private Vector<String> orderKeyVector = new Vector<>();
+    private String runingOrderKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_offline_del_authory);
         ButterKnife.bind(this);
+        ObserverManager.getObserver().addObserver(this);
         roomid = getIntent().getStringExtra("roomid");
         init();
     }
@@ -109,6 +125,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         ButterKnife.unbind(this);
+        ObserverManager.getObserver().deleteObserver(this);
     }
 
     private void rquestOfflineDelUser(String key) {
@@ -134,6 +151,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
             public void onSuccess(BaseResponse br) {
                 super.onSuccess(br);
                 OfflineDelAuthoryUserInfoResponse odi = (OfflineDelAuthoryUserInfoResponse) br;
+                WaitTool.dismissDialog();
                 if (odi.getErrCode() == 0) {
                     if (odi.getRoomcard() == null || odi.getRoomcard().isEmpty()) {
                         ToastUtil.showText("无搜索到结果");
@@ -196,14 +214,39 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
     private void submitOfflineDelAuthorResult() {
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
-        params.put("roomid", "1");
-        OrderResponse.OrderInfo order;
-//        params.put("orderresult", order.toString());
+        params.put("roomid", roomid);
+        OrderResultServerBean orsb = new OrderResultServerBean();
+        List<FingerOrderResult> fingerOrderResults = new ArrayList<>();
+        List<CardOrderResult> cardOrderResult = new ArrayList<>();
+        for (OrderResultBean orb : orderHashMap.values()) {
+            switch (orb.getType()) {//0:密码； 1：指纹；2：卡片;
+                case 0:
+                    break;
+                case 1:
+                    FingerOrderResult fr = new FingerOrderResult();
+                    fr.setFinorderresult(orb.getOrderresult());
+                    fr.setRfids(orb.getIds());
+                    fingerOrderResults.add(fr);
+                    break;
+                case 2:
+                    CardOrderResult cr = new CardOrderResult();
+                    cr.setCardorderresult(orb.getOrderresult());
+                    cr.setRcids(orb.getIds());
+                    cardOrderResult.add(cr);
+                    break;
+            }
+        }
+        orsb.setFingerresult(SerializationDefine.List2Str(fingerOrderResults));
+        orsb.setCardresult(SerializationDefine.List2Str(cardOrderResult));
+        params.put("orderresult", SerializationDefine.Object2String(orsb));
         OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
             @Override
             public void onSuccess(BaseResponse br) {
                 super.onSuccess(br);
+                WaitTool.dismissDialog();
                 if (br.getErrCode() == 0) {
+                    ToastUtil.showText("下发成功");
+                    adapter.clear();
                 } else {
                     ToastUtil.showText(br.getErrMsg());
                 }
@@ -231,6 +274,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
             case R.id.offline_del_authory_search_ok:
                 String key = searchEdit.getText().toString();
                 if (!TextUtils.isEmpty(key)) {
+                    WaitTool.showDialog(this);
                     rquestOfflineDelUser(key);
                 }
                 break;
@@ -256,8 +300,32 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
                     @Override
                     public void onSuccess(BaseResponse br) {
                         super.onSuccess(br);
-                        if (br.getErrCode() == 0) {
-
+                        OrderResponse or = (OrderResponse) br;
+                        if (or.getErrCode() == 0) {
+                            List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
+                            if (cardOrder != null && !cardOrder.isEmpty()) {
+                                for (OrderResponse.CardOrder co : cardOrder) {
+                                    OrderResultBean orb = new OrderResultBean();
+                                    orb.setType(2);//0:密码；1：指纹； 2：卡片;
+                                    orb.setIds(co.getRcids());
+                                    orb.setOrder(co.getCardorder());
+                                    orderHashMap.put(2 + "#" + co.getRcids(), orb);
+                                }
+                            }
+                            List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
+                            if (fingerOrder != null && !fingerOrder.isEmpty()) {
+                                for (OrderResponse.FingerOrder fo : fingerOrder) {
+                                    OrderResultBean orb = new OrderResultBean();
+                                    orb.setType(1);//0:密码；1：指纹； 2：卡片;
+                                    orb.setIds(fo.getRfids());
+                                    orb.setOrder(fo.getFinorder());
+                                    orderHashMap.put(1 + "#" + fo.getFinorder(), orb);
+                                }
+                            }
+                            if (!orderHashMap.isEmpty()) {
+                                WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
+                                sendOrderToBt();
+                            }
                         } else {
                             ToastUtil.showText(br.getErrMsg());
                         }
@@ -272,4 +340,41 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity {
                 break;
         }
     }
+
+    private void sendOrderToBt() {
+        Set<String> orderKeySet = orderHashMap.keySet();
+        for (String s : orderKeySet) {
+            orderKeyVector.add(s);
+        }
+        runingOrderKey = orderKeyVector.remove(0);
+        sendOrderCommand(runingOrderKey);
+    }
+
+    private void sendOrderCommand(String order) {
+        Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, order);
+        sendBroadcast(intent);
+    }
+
+    @Override
+    public void update(Observable o, Object obj) {
+        ObservableBean ob = (ObservableBean) obj;
+        switch (ob.getWhat()) {
+            case BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT:
+                LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
+                //创建旋转动画
+                OrderResultBean order = orderHashMap.get(runingOrderKey);
+                order.setOrderresult("result");
+                orderHashMap.remove(runingOrderKey);
+                orderHashMap.put(runingOrderKey, order);
+                if (orderKeyVector.isEmpty()) {
+                    submitOfflineDelAuthorResult();
+                } else {
+                    runingOrderKey = orderKeyVector.remove(0);
+                    sendOrderCommand(runingOrderKey);
+                }
+                break;
+        }
+    }
+
 }

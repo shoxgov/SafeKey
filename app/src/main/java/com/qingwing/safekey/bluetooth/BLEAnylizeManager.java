@@ -7,6 +7,9 @@ import com.qingwing.safekey.observable.ObservableBean;
 import com.qingwing.safekey.observable.ObserverManager;
 import com.qingwing.safekey.utils.LogUtil;
 
+import java.text.SimpleDateFormat;
+import java.util.logging.SimpleFormatter;
+
 
 /**
  * 解析蓝牙数据类
@@ -23,7 +26,12 @@ public class BLEAnylizeManager {
             return;
         }
         LogUtil.d(" anylize >>>" + data);
-        String interceptData = data.substring(20, 24);
+        String interceptData;
+        if (data.startsWith("BBBB")) {
+            interceptData = data.substring(22, 26);
+        } else {
+            interceptData = data.substring(20, 24);
+        }
         LogUtil.d("QWBLE analyzeBT   interceptData：" + interceptData);
         // 保管箱状态查询
         /*AA AA|				数据包头
@@ -70,19 +78,23 @@ public class BLEAnylizeManager {
             String otherOpenCardNum = data.substring(42, 46);//
             String authoryCardNum = data.substring(48, 50);//
             String recordNum = data.substring(50, 54);//记录条数信息
-            String versonCode = data.substring(54, 62);//版本号4字节
+            String versonCode1 = data.substring(54, 56);//版本号4字节
+            String versonCode2 = data.substring(56, 58);//版本号4字节
+            String versonCode3 = data.substring(58, 62);//版本号4字节
             String lockSN = data.substring(68, 78);//版本号4字节
             LockStatus ls = new LockStatus();
-            if(lockStatus.equals("00")){
+            if (lockStatus.equals("00")) {
                 ls.setLockStatus(0);
-            } else if(lockStatus.equals("01")){
+            } else if (lockStatus.equals("01")) {
                 ls.setLockStatus(1);
-            } else if(lockStatus.equals("10")){
+            } else if (lockStatus.equals("10")) {
                 ls.setLockStatus(2);
-            } else if(lockStatus.equals("11")){
+            } else if (lockStatus.equals("11")) {
                 ls.setLockStatus(3);
             }
             ls.setLockId(lockId);
+//            SimpleDateFormat sf = new SimpleDateFormat("HH:mm:ss");
+            ls.setAddr(addr);
             ls.setTime(time);
             ls.setElectricValue(BlueDeviceUtils.hexStringToInteger(electricValue));
             ls.setStudentOpenCardNum(BlueDeviceUtils.hexStringToInteger(studentOpenCardNum));
@@ -90,14 +102,18 @@ public class BLEAnylizeManager {
             ls.setOtherOpenCardNum(BlueDeviceUtils.hexStringToInteger(otherOpenCardNum));
             ls.setAuthoryCardNum(BlueDeviceUtils.hexStringToInteger(authoryCardNum));
             ls.setRecordNum(BlueDeviceUtils.hexStringToInteger(recordNum));
-            ls.setVersonCode(versonCode);
+            ls.setVersonCode("V" + BlueDeviceUtils.hexStringToInteger(versonCode1) + "." + BlueDeviceUtils.hexStringToInteger(versonCode2) + "." + versonCode3);
             ls.setLockSN(lockSN);
             ObservableBean obj = new ObservableBean();
             obj.setWhat(BleObserverConstance.RECEIVER_BT_SATUS);
+            obj.setObject(ls);
+            ObserverManager.getObserver().setMessage(obj);
+        } // 接收记录信息
+        else if (interceptData.equals("01A9")) {
+            ObservableBean obj = new ObservableBean();
+            obj.setWhat(BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD);
             obj.setObject(data);
             ObserverManager.getObserver().setMessage(obj);
-        } // 接收保管箱读取记录信息
-        else if (interceptData.equals("0117")) {
         } else if (interceptData.equals("00A2")) { // 接收到插入充电线主动上传APP
 //            ObservableBean obj = new ObservableBean();
 //            obj.setWhat(BleObserverConstance.RECEIVER_BOX_DATA_RECHARGE);

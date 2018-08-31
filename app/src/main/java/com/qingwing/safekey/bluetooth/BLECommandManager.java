@@ -59,11 +59,11 @@ public class BLECommandManager {
      * 17 05 08
      * xx xx				校验（2字节）
      **/
-    public static void queryStatus(Context context, String gatewayCode, String deviceId) {
+    public static void queryStatus(Context context, String gatewayCode, String roomid) {
         try {
             LogUtil.d("查询状态");
             Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-            String str = "AAAA" + "11" + gatewayCode + deviceId + "0000" + getThreeSystemTime();
+            String str = "AAAA" + "11" + gatewayCode + roomid + "00A0" + getThreeSystemTime();
             intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, getSendBlueId(str, "", ""));
             context.sendBroadcast(intent);
         } catch (Exception e) {

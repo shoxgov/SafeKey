@@ -38,6 +38,7 @@ public class DeviceListResponse extends BaseResponse {
         private String devicetypeid;
         private String devicetypename;
         private String deviceid;
+        private String rcode;
         private String wcode;
         private String gatewaycode;
         private String devicename;
@@ -45,6 +46,14 @@ public class DeviceListResponse extends BaseResponse {
         private boolean online;
         private boolean select;
         private int rssi;
+
+        public String getRcode() {
+            return rcode;
+        }
+
+        public void setRcode(String rcode) {
+            this.rcode = rcode;
+        }
 
         public boolean isSelect() {
             return select;

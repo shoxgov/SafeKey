@@ -15,9 +15,11 @@ import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
 import com.qingwing.safekey.adapter.BtHandleAdapter;
 import com.qingwing.safekey.bean.BtHandleBean;
+import com.qingwing.safekey.bean.LockStatus;
 import com.qingwing.safekey.bluetooth.BLECommandManager;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
+import com.qingwing.safekey.dialog.WaitTool;
 import com.qingwing.safekey.observable.ObservableBean;
 import com.qingwing.safekey.observable.ObserverManager;
 import com.qingwing.safekey.okhttp3.http.HttpCallback;
@@ -45,10 +47,10 @@ import butterknife.OnClick;
  */
 
 public class BtHandleActivity extends BaseActivity implements Observer {
-    @Bind(R.id.bt_handle_text_info)
-    TextView testInfo;
-    @Bind(R.id.bt_handle_test)
-    EditText commandEdit;
+    //    @Bind(R.id.bt_handle_text_info)
+//    TextView testInfo;
+//    @Bind(R.id.bt_handle_test)
+//    EditText commandEdit;
     @Bind(R.id.bt_handle_edit)
     EditText infoEdit;
     @Bind(R.id.bt_handle_list)
@@ -56,7 +58,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
     /**
      * 筛选条件保存
      */
-    private String selectHouseId, selectFloorId, selectDeviceType, selectDeviceId, selectGatewayCode;
+    private String selectHouseId, selectFloorId, selectDeviceType, luckId, selectDeviceId, selectGatewayCode;
     /*
     离线指令保存
      */
@@ -72,13 +74,14 @@ public class BtHandleActivity extends BaseActivity implements Observer {
         selectHouseId = getIntent().getStringExtra("selectHouseId");
         selectFloorId = getIntent().getStringExtra("selectFloorId");
         selectDeviceType = getIntent().getStringExtra("selectDeviceType");
+        luckId = getIntent().getStringExtra("luckId");
         selectDeviceId = getIntent().getStringExtra("selectDeviceId");
         selectGatewayCode = getIntent().getStringExtra("selectGatewayCode");
         init();
     }
 
     private void init() {
-        testInfo.setText("收到 selectHouseId=" + selectHouseId + ",selectFloorId=" + selectFloorId + ",selectDeviceType=" + selectDeviceType);
+//        testInfo.setText("收到 selectHouseId=" + selectHouseId + ",selectFloorId=" + selectFloorId + ",selectDeviceType=" + selectDeviceType);
         BtHandleAdapter adapter = new BtHandleAdapter(this);
         listView.setAdapter(adapter);
         List<BtHandleBean> data = new ArrayList<>();
@@ -132,7 +135,8 @@ public class BtHandleActivity extends BaseActivity implements Observer {
 //                    String strb = getSendBlueId(BlueId, "0025", startTime + level + ServiceStopTime + userpassword);
 //                    intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, strb);
 //                    context.sendBroadcast(intent);
-                    BLECommandManager.queryStatus(BtHandleActivity.this, selectGatewayCode, selectDeviceId);
+                    WaitTool.showDialog(BtHandleActivity.this);
+                    BLECommandManager.queryStatus(BtHandleActivity.this, selectGatewayCode, luckId);
                     break;
                 case 1:
                     Intent authorization = new Intent();
@@ -212,6 +216,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
 
 
     private void obtainOfflineRecorderCommand() {
+        WaitTool.showDialog(this);
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("roomid", selectDeviceId);
@@ -226,6 +231,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, orr.getOrder());
                     sendBroadcast(intent);
                 } else {
+                    WaitTool.dismissDialog();
                     ToastUtil.showText(orr.getErrMsg());
                 }
             }
@@ -238,45 +244,18 @@ public class BtHandleActivity extends BaseActivity implements Observer {
         });
     }
 
-    /**
-     * itid	是	查询门锁记录原始id
-     * record	是	记录信息
-     */
-    private void submitOfflineRecorderCommand() {
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("token", SKApplication.loginToken);
-        params.put("itid", offlineRecorderResponse.getItid());
-        params.put("record", "1");
-        OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_RECORDER_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
-            @Override
-            public void onSuccess(BaseResponse br) {
-                super.onSuccess(br);
-                if (br.getErrCode() == 0) {
-                } else {
-                    ToastUtil.showText(br.getErrMsg());
-                }
-            }
-
-            @Override
-            public void onFailure(int code, String message) {
-                super.onFailure(code, message);
-                ToastUtil.showText(message);
-            }
-        });
-    }
-
-    @OnClick({R.id.bt_handle_disconnect, R.id.bt_handle_test_bt})
+    @OnClick({R.id.bt_handle_disconnect/*, R.id.bt_handle_test_bt*/})
     public void onViewClicked(View v) {
         switch (v.getId()) {
-            case R.id.bt_handle_test_bt:
-                String command = commandEdit.getText().toString();
-                if (TextUtils.isEmpty(command)) {
-                    return;
-                }
-                Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-                intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, command);
-                sendBroadcast(intent);
-                break;
+//            case R.id.bt_handle_test_bt:
+//                String command = commandEdit.getText().toString();
+//                if (TextUtils.isEmpty(command)) {
+//                    return;
+//                }
+//                Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+//                intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, command);
+//                sendBroadcast(intent);
+//                break;
             case R.id.bt_handle_disconnect:
                 Intent disconnect = new Intent();
                 disconnect.setAction(BluetoothService.ACTION_BT_COMMAND);
@@ -304,6 +283,48 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     ToastUtil.showText("蓝牙已断开");
                     finish();
                 }
+                break;
+
+            case BleObserverConstance.RECEIVER_BT_SATUS:
+                WaitTool.dismissDialog();
+                LockStatus ls = (LockStatus) ob.getObject();
+                StringBuffer sb = new StringBuffer();
+                sb.append("网关地址:").append(ls.getAddr()).append("\n")
+                        .append("时分秒:").append(ls.getTime()).append("\n")
+                        .append("电量:").append(ls.getElectricValue() + "%").append("\n")
+                        .append("学生开门卡数量:").append(ls.getStudentOpenCardNum()).append("\n")
+                        .append("管理开门卡数量:").append(ls.getManagerOpenCardNum()).append("\n")
+                        .append("特殊开门卡数量:").append(ls.getOtherOpenCardNum()).append("\n")
+                        .append("授权卡数量:").append(ls.getAuthoryCardNum()).append("\n")
+                        .append("记录条数信息:").append(ls.getRecordNum()).append("\n")
+                        .append("版本号:").append(ls.getVersonCode()).append("\n");
+                infoEdit.setText(sb.toString());
+                break;
+            //接收离线上传记录
+            case BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD:
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("token", SKApplication.loginToken);
+                params.put("itid", offlineRecorderResponse.getItid());
+                params.put("record", ob.getObject().toString());
+                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_RECORDER_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
+                    @Override
+                    public void onSuccess(BaseResponse br) {
+                        super.onSuccess(br);
+                        WaitTool.dismissDialog();
+                        if (br.getErrCode() == 0) {
+                            ToastUtil.showText("离线上传记录成功");
+                        } else {
+                            ToastUtil.showText(br.getErrMsg());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(int code, String message) {
+                        super.onFailure(code, message);
+                        ToastUtil.showText(message);
+                        WaitTool.dismissDialog();
+                    }
+                });
                 break;
         }
 
