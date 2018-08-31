@@ -176,7 +176,15 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
     }
 
     private void addAffirmDialog(final OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo person) {
-        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode();
+        String type = "密码";//"1（密码）/2（指纹）/3（卡片）",
+        if (person.getSqtype().equals("1")) {
+            type = "密码";
+        } else if (person.getSqtype().equals("2")) {
+            type = "指纹";
+        } else if (person.getSqtype().equals("3")) {
+            type = "卡片";
+        }
+        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode() + "    授权类型：" + type;
         AffirmDialog warnDialog = new AffirmDialog(OfflineDeleteAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
@@ -195,7 +203,15 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         final String[] items = new String[person.size()];//{"我是1", "我是2", "我是3", "我是4"};
         int i = 0;
         for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo aui : person) {
-            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode();
+            String type = "密码";//"1（密码）/2（指纹）/3（卡片）",
+            if (aui.getSqtype().equals("1")) {
+                type = "密码";
+            } else if (aui.getSqtype().equals("2")) {
+                type = "指纹";
+            } else if (aui.getSqtype().equals("3")) {
+                type = "卡片";
+            }
+            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "    授权类型：" + type;
             i++;
         }
         AlertDialog.Builder listDialog =
@@ -350,9 +366,9 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         sendOrderCommand(runingOrderKey);
     }
 
-    private void sendOrderCommand(String order) {
+    private void sendOrderCommand(String key) {
         Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, order);
+        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, orderHashMap.get(key).getOrder());
         sendBroadcast(intent);
     }
 
@@ -364,7 +380,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
                 LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
                 //创建旋转动画
                 OrderResultBean order = orderHashMap.get(runingOrderKey);
-                order.setOrderresult("result");
+                order.setOrderresult(ob.getObject().toString());
                 orderHashMap.remove(runingOrderKey);
                 orderHashMap.put(runingOrderKey, order);
                 if (orderKeyVector.isEmpty()) {

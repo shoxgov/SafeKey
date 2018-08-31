@@ -114,11 +114,11 @@ public class BLEAnylizeManager {
             obj.setWhat(BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD);
             obj.setObject(data);
             ObserverManager.getObserver().setMessage(obj);
-        } else if (interceptData.equals("00A2")) { // 接收到插入充电线主动上传APP
-//            ObservableBean obj = new ObservableBean();
-//            obj.setWhat(BleObserverConstance.RECEIVER_BOX_DATA_RECHARGE);
-//            obj.setObject(data);
-//            ObserverManager.getObserver().setMessage(obj);
+        } else if (interceptData.equals("01A2") || interceptData.equals("01A1")) { // a1就是卡片和密码;;;指纹是a2
+            ObservableBean obj = new ObservableBean();
+            obj.setWhat(BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT);
+            obj.setObject(data);
+            ObserverManager.getObserver().setMessage(obj);
         } else {
 //            ObservableBean obj = new ObservableBean();
 //            obj.setWhat(BleObserverConstance.BOX_RECEIVER_INFO_UNKNOW);

@@ -79,7 +79,16 @@ public class DelAuthoryAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) convertView.getTag();
         }
         OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo aui = data.get(position);
-        viewHolder.info.setText("姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode());
+        String type = "密码";//"1（密码）/2（指纹）/3（卡片）",
+        if (aui.getSqtype().equals("1")) {
+            type = "密码";
+        } else if (aui.getSqtype().equals("2")) {
+            type = "指纹";
+        } else if (aui.getSqtype().equals("3")) {
+            type = "卡片";
+        }
+        final String info = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "    授权类型：" + type;
+        viewHolder.info.setText(info);
         viewHolder.del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

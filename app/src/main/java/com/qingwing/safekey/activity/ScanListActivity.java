@@ -120,7 +120,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
             case BleObserverConstance.BOX_CONNTEC_BLE_STATUS:
                 if ((boolean) ob.getObject()) {
                 } else {
-                    ToastUtil.showText("连接失败");
+                    ToastUtil.showText("连接失败,请重试");
                     WaitTool.dismissDialog();
                 }
                 break;
