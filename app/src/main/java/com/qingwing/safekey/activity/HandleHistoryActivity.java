@@ -16,6 +16,7 @@ import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
 import com.qingwing.safekey.adapter.CustomBaseQuickAdapter;
+import com.qingwing.safekey.dialog.WaitTool;
 import com.qingwing.safekey.imp.TitleBarListener;
 import com.qingwing.safekey.okhttp3.http.HttpCallback;
 import com.qingwing.safekey.okhttp3.http.OkHttpUtils;
@@ -96,6 +97,7 @@ public class HandleHistoryActivity extends BaseActivity {
      * page	是	页数
      */
     public void requestHistory() {
+        WaitTool.showDialog(this);
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("devicetype", selectDeviceType);
@@ -109,6 +111,7 @@ public class HandleHistoryActivity extends BaseActivity {
             public void onSuccess(BaseResponse br) {
                 super.onSuccess(br);
                 DeviceHistoryListResponse dlr = (DeviceHistoryListResponse) br;
+                WaitTool.dismissDialog();
                 if (dlr.getErrCode() == 0) {
                     if (TextUtils.isEmpty(dlr.getTotal()) || dlr.getTotal().equals("0")) {
                         recyclerSwipeLayout.setEmpty();
@@ -128,6 +131,7 @@ public class HandleHistoryActivity extends BaseActivity {
             @Override
             public void onFailure(int code, String message) {
                 super.onFailure(code, message);
+                WaitTool.dismissDialog();
                 ToastUtil.showText("request fail message=" + message);
             }
         });

@@ -152,6 +152,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     for (BtDeviceInfo bi : scanMap) {
                         if (!TextUtils.isEmpty(deviceList.get(i).getWcode()) && deviceList.get(i).getWcode().equals(bi.getName())) {
                             deviceList.get(i).setBtAddress(bi.getAddress());
+                            deviceList.get(i).setRssi(bi.getRssi());
                             find = true;
                             break;
                         }
@@ -363,8 +364,10 @@ public class ScanListActivity extends BaseActivity implements Observer {
             baseViewHolder.setText(R.id.scan_bt_addr, bdi.getDevicename());
             baseViewHolder.setText(R.id.scan_bt_mode, "类型：" + bdi.getDevicetypename());
             if (bdi.isOnline()) {
+                baseViewHolder.setText(R.id.scan_bt_rssi, "" + bdi.getRssi());
                 baseViewHolder.setImageResource(R.id.scan_bt_status, R.mipmap.bluetooth_online);
             } else {
+                baseViewHolder.setText(R.id.scan_bt_rssi, "");
                 baseViewHolder.setImageResource(R.id.scan_bt_status, R.mipmap.bluetooth_disconnect);
             }
             if (selectDeviceId.equals(bdi.getDeviceid())) {

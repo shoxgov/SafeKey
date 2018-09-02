@@ -16,6 +16,8 @@ import com.qingwing.safekey.SKApplication;
 import com.qingwing.safekey.adapter.BtHandleAdapter;
 import com.qingwing.safekey.bean.BtHandleBean;
 import com.qingwing.safekey.bean.LockStatus;
+import com.qingwing.safekey.bean.LockStatusEmue;
+import com.qingwing.safekey.bluetooth.BLEAnylizeManager;
 import com.qingwing.safekey.bluetooth.BLECommandManager;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
@@ -288,8 +290,35 @@ public class BtHandleActivity extends BaseActivity implements Observer {
             case BleObserverConstance.RECEIVER_BT_SATUS:
                 WaitTool.dismissDialog();
                 LockStatus ls = (LockStatus) ob.getObject();
+                LockStatusEmue lse = ls.getLockStatus();
+                StringBuffer lockStatus = new StringBuffer();
+                if (lse.isHasDoorMagnetic()) {
+                    lockStatus.append("支持门磁|");
+                } else {
+                    lockStatus.append("不支持门磁|");
+                }
+                if (lse.isHasBackLock()) {
+                    lockStatus.append("支持反锁|");
+                } else {
+                    lockStatus.append("不支持反锁|");
+                }
+                if (lse.isBackLock()) {
+                    lockStatus.append("已反锁|");
+                } else {
+                    lockStatus.append("未反锁|");
+                }
+                if (lse.isHasDoorMagnetic()) {
+                    if (lse.isHasDoorMagnetic()) {
+                        lockStatus.append("门开");
+                    } else {
+                        lockStatus.append("门关");
+                    }
+                } else {
+                    lockStatus.deleteCharAt(lockStatus.length() - 1);
+                }
                 StringBuffer sb = new StringBuffer();
                 sb.append("网关地址:").append(ls.getAddr()).append("\n")
+                        .append("生命周期状态:").append(lockStatus).append("\n")
                         .append("时分秒:").append(ls.getTime()).append("\n")
                         .append("电量:").append(ls.getElectricValue() + "%").append("\n")
                         .append("学生开门卡数量:").append(ls.getStudentOpenCardNum()).append("\n")
@@ -306,6 +335,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                 params.put("token", SKApplication.loginToken);
                 params.put("itid", offlineRecorderResponse.getItid());
                 params.put("record", ob.getObject().toString());
+                final String recordNum = ob.getObject().toString().substring(44, 46);
                 OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_RECORDER_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
                     @Override
                     public void onSuccess(BaseResponse br) {
@@ -313,6 +343,14 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                         WaitTool.dismissDialog();
                         if (br.getErrCode() == 0) {
                             ToastUtil.showText("离线上传记录成功");
+                            if (offlineRecorderResponse != null) {
+                                String orignOrder = offlineRecorderResponse.getOrder();
+                                StringBuffer newOrder = new StringBuffer();
+                                newOrder.append(orignOrder.substring(0, 20)).append("10A9").append(orignOrder.substring(24, 30)).append(recordNum);
+                                Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+                                intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, BLECommandManager.getSendBlueId(newOrder.toString(), "", ""));
+                                sendBroadcast(intent);
+                            }
                         } else {
                             ToastUtil.showText(br.getErrMsg());
                         }

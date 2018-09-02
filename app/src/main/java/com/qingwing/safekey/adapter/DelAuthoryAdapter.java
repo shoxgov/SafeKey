@@ -87,7 +87,7 @@ public class DelAuthoryAdapter extends BaseAdapter {
         } else if (aui.getSqtype().equals("3")) {
             type = "卡片";
         }
-        final String info = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "    授权类型：" + type;
+        final String info = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "\n授权类型：" + type;
         viewHolder.info.setText(info);
         viewHolder.del.setOnClickListener(new View.OnClickListener() {
             @Override

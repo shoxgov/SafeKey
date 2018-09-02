@@ -7,7 +7,7 @@ public class WaitTool {
     private static CustomProgressDialog waitingDialog;
 
     public static void showDialog(Context cont) {
-        showDialog(cont, "正在加载中...", false);
+        showDialog(cont, "", false);
     }
 
     public static void showDialog(Context cont, String msg) {

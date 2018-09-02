@@ -21,11 +21,8 @@ import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
 import com.qingwing.safekey.adapter.AuthoryAdapter;
-import com.qingwing.safekey.bean.CardOrderResult;
-import com.qingwing.safekey.bean.FingerOrderResult;
 import com.qingwing.safekey.bean.OfflineAuthoryUserInfo;
 import com.qingwing.safekey.bean.OrderResultBean;
-import com.qingwing.safekey.bean.OrderResultServerBean;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
 import com.qingwing.safekey.dialog.AffirmDialog;
@@ -45,6 +42,9 @@ import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 import com.qingwing.safekey.view.DateTimePickDialogUtil;
 import com.qingwing.safekey.view.TitleBar;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -140,7 +140,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
 
     @OnClick({R.id.offline_authory_search_ok, R.id.offline_authory_start_time, R.id.offline_authory_end_time, R.id.offline_authory_send})
     public void onViewClicked(View view) {
-        if(Utils.isFastDoubleClick()){
+        if (Utils.isFastDoubleClick()) {
             return;
         }
         switch (view.getId()) {
@@ -263,7 +263,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                     roomcard.add(oui);
                 }
                 params2.put("roomcard", SerializationDefine.List2Str(roomcard));
-
+                WaitTool.showDialog(this);
                 OkHttpUtils.postAsyn(NetWorkConfig.OBTAIN_OFFLINE_AUTHORY_SAVE, params2, OrderResponse.class, new HttpCallback() {
                     @Override
                     public void onSuccess(BaseResponse br) {
@@ -293,6 +293,9 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                             if (!orderHashMap.isEmpty()) {
                                 WaitTool.showDialog(OfflineAuthorizationActivity.this);
                                 sendOrderToBt();
+                            } else {
+                                WaitTool.dismissDialog();
+                                ToastUtil.showText("该用户没有指令数据");
                             }
                         } else {
                             ToastUtil.showText(or.getErrMsg());
@@ -329,7 +332,8 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
     public void update(Observable o, Object obj) {
         ObservableBean ob = (ObservableBean) obj;
         switch (ob.getWhat()) {
-            case BleObserverConstance.LOCK_OFFLINE_AUTHORY_COMMAND_RESULT:
+//            case BleObserverConstance.LOCK_OFFLINE_AUTHORY_COMMAND_RESULT:
+            case BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT:
                 LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
                 //创建旋转动画
                 OrderResultBean order = orderHashMap.get(runingOrderKey);
@@ -337,7 +341,6 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                 orderHashMap.remove(runingOrderKey);
                 orderHashMap.put(runingOrderKey, order);
                 if (orderKeyVector.isEmpty()) {
-
                     submitOfflineCommand();
                 } else {
                     runingOrderKey = orderKeyVector.remove(0);
@@ -414,31 +417,57 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("roomid", roomid);
-        OrderResultServerBean orsb = new OrderResultServerBean();
-        List<FingerOrderResult> fingerOrderResults = new ArrayList<>();
-        List<CardOrderResult> cardOrderResult = new ArrayList<>();
-        for(OrderResultBean orb: orderHashMap.values()){
+        JSONObject orderresult = new JSONObject();
+        JSONArray cardOrderResult = new JSONArray();
+        JSONArray fingerOrderResults = new JSONArray();
+
+//        OrderResultServerBean orsb = new OrderResultServerBean();
+//        List<FingerOrderResult> fingerOrderResults = new ArrayList<>();
+//        List<CardOrderResult> cardOrderResult = new ArrayList<>();
+        for (OrderResultBean orb : orderHashMap.values()) {
 
             switch (orb.getType()) {//0:密码； 1：指纹；2：卡片;
                 case 0:
                     break;
                 case 1:
-                    FingerOrderResult fr = new FingerOrderResult();
-                    fr.setFinorderresult(orb.getOrderresult());
-                    fr.setRfids(orb.getIds());
-                    fingerOrderResults.add(fr);
+                    try {
+                        JSONObject fjson = new JSONObject();
+                        fjson.put("finorderresult", orb.getOrderresult());
+                        fjson.put("rfids", orb.getIds());
+                        fingerOrderResults.put(fjson);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+//                    FingerOrderResult fr = new FingerOrderResult();
+//                    fr.setFinorderresult(orb.getOrderresult());
+//                    fr.setRfids(orb.getIds());
+//                    fingerOrderResults.add(fr);
                     break;
                 case 2:
-                    CardOrderResult cr = new CardOrderResult();
-                    cr.setCardorderresult(orb.getOrderresult());
-                    cr.setRcids(orb.getIds());
-                    cardOrderResult.add(cr);
+                    try {
+                        JSONObject cjson = new JSONObject();
+                        cjson.put("finorderresult", orb.getOrderresult());
+                        cjson.put("rfids", orb.getIds());
+                        cardOrderResult.put(cjson);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+//                    CardOrderResult cr = new CardOrderResult();
+//                    cr.setCardorderresult(orb.getOrderresult());
+//                    cr.setRcids(orb.getIds());
+//                    cardOrderResult.add(cr);
                     break;
             }
         }
-        orsb.setFingerresult(SerializationDefine.List2Str(fingerOrderResults));
-        orsb.setCardresult(SerializationDefine.List2Str(cardOrderResult));
-        params.put("orderresult", SerializationDefine.Object2String(orsb));
+//        orsb.setFingerresult(SerializationDefine.List2Str(fingerOrderResults));
+//        orsb.setCardresult(SerializationDefine.List2Str(cardOrderResult));
+        try {
+            orderresult.put("fingerresult", fingerOrderResults);
+            orderresult.put("cardresult", cardOrderResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        params.put("orderresult", orderresult.toString());
         OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
             @Override
             public void onSuccess(BaseResponse br) {

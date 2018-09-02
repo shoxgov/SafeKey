@@ -8,7 +8,7 @@ public class LockStatus {
     private String addr;
     private String lockId;
     private String time;
-    private int lockStatus;
+    private LockStatusEmue lockStatus;
     private int electricValue;
     private int studentOpenCardNum;
     private int managerOpenCardNum;
@@ -42,11 +42,11 @@ public class LockStatus {
         this.time = time;
     }
 
-    public int getLockStatus() {
+    public LockStatusEmue getLockStatus() {
         return lockStatus;
     }
 
-    public void setLockStatus(int lockStatus) {
+    public void setLockStatus(LockStatusEmue lockStatus) {
         this.lockStatus = lockStatus;
     }
 

@@ -55,7 +55,7 @@ public class SerializationDefine {
     public static <T> String List2Str(List<T> objects) {
         String[] strings = List2StringArray(objects);
         if (strings == null || strings.length == 0) {
-            return "";
+            return "[]";
         }
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append("[");

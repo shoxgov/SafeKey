@@ -79,7 +79,8 @@ public class AuthoryAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) convertView.getTag();
         }
         OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui = data.get(position);
-        viewHolder.info.setText("姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode());
+        final String info = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode();
+        viewHolder.info.setText(info);
         viewHolder.del.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

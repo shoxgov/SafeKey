@@ -3,11 +3,13 @@ package com.qingwing.safekey.bluetooth;
 import android.text.TextUtils;
 
 import com.qingwing.safekey.bean.LockStatus;
+import com.qingwing.safekey.bean.LockStatusEmue;
 import com.qingwing.safekey.observable.ObservableBean;
 import com.qingwing.safekey.observable.ObserverManager;
 import com.qingwing.safekey.utils.LogUtil;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.SimpleFormatter;
 
 
@@ -71,7 +73,6 @@ public class BLEAnylizeManager {
             String addr = data.substring(6, 16);//网关地址
             String lockId = data.substring(16, 20);//门锁ID
             String time = data.substring(24, 30);//
-            String lockStatus = data.substring(30, 32);//
             String electricValue = data.substring(32, 34);//电量值  16进制
             String studentOpenCardNum = data.substring(34, 38);//
             String managerOpenCardNum = data.substring(38, 42);//
@@ -82,19 +83,39 @@ public class BLEAnylizeManager {
             String versonCode2 = data.substring(56, 58);//版本号4字节
             String versonCode3 = data.substring(58, 62);//版本号4字节
             String lockSN = data.substring(68, 78);//版本号4字节
+            String lockStatus = data.substring(30, 32);//
+            int lStatus = BlueDeviceUtils.hexStringToInteger(lockStatus);
             LockStatus ls = new LockStatus();
-            if (lockStatus.equals("00")) {
-                ls.setLockStatus(0);
-            } else if (lockStatus.equals("01")) {
-                ls.setLockStatus(1);
-            } else if (lockStatus.equals("10")) {
-                ls.setLockStatus(2);
-            } else if (lockStatus.equals("11")) {
-                ls.setLockStatus(3);
+            LockStatusEmue lse = new LockStatusEmue();
+            if ((lStatus & 0x80) == 0x00) {
+                lse.setHasDoorMagnetic(true);
+            } else {
+                lse.setHasDoorMagnetic(false);
             }
+            if ((lStatus & 0x40) == 0x00) {
+                lse.setHasBackLock(true);
+            } else {
+                lse.setHasBackLock(false);
+            }
+            if ((lStatus & 0x20) == 0x20) {
+                lse.setBackLock(true);
+            } else {
+                lse.setBackLock(false);
+            }
+            if ((lStatus & 0x10) == 0x10) {
+                lse.setOpen(true);
+            } else {
+                lse.setOpen(false);
+            }
+            ls.setLockStatus(lse);
             ls.setLockId(lockId);
-//            SimpleDateFormat sf = new SimpleDateFormat("HH:mm:ss");
             ls.setAddr(addr);
+            try {
+                Date date = new SimpleDateFormat("HHmmss").parse(time);
+                time = new SimpleDateFormat("HH:mm:ss").format(date);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             ls.setTime(time);
             ls.setElectricValue(BlueDeviceUtils.hexStringToInteger(electricValue));
             ls.setStudentOpenCardNum(BlueDeviceUtils.hexStringToInteger(studentOpenCardNum));

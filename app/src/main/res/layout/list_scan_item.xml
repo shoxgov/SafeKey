@@ -33,5 +33,14 @@
         android:layout_marginLeft="10dip"
         android:layout_marginRight="10dip"
         android:src="@mipmap/bluetooth_online" />
+
+    <TextView
+        android:id="@+id/scan_bt_rssi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:minEms="3"
+        android:text=""
+        android:textColor="@color/textblack" />
 </LinearLayout>
 

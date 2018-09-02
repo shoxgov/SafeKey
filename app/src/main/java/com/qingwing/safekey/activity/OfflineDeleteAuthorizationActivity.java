@@ -17,11 +17,8 @@ import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
 import com.qingwing.safekey.adapter.DelAuthoryAdapter;
-import com.qingwing.safekey.bean.CardOrderResult;
-import com.qingwing.safekey.bean.FingerOrderResult;
 import com.qingwing.safekey.bean.OfflineDelAuthoryRoomBack;
 import com.qingwing.safekey.bean.OrderResultBean;
-import com.qingwing.safekey.bean.OrderResultServerBean;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
 import com.qingwing.safekey.dialog.AffirmDialog;
@@ -40,6 +37,9 @@ import com.qingwing.safekey.utils.SerializationDefine;
 import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 import com.qingwing.safekey.view.TitleBar;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -184,7 +184,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         } else if (person.getSqtype().equals("3")) {
             type = "卡片";
         }
-        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode() + "    授权类型：" + type;
+        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode() + "\n授权类型：" + type;
         AffirmDialog warnDialog = new AffirmDialog(OfflineDeleteAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
@@ -211,7 +211,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
             } else if (aui.getSqtype().equals("3")) {
                 type = "卡片";
             }
-            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "    授权类型：" + type;
+            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "\n授权类型：" + type;
             i++;
         }
         AlertDialog.Builder listDialog =
@@ -231,30 +231,54 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("roomid", roomid);
-        OrderResultServerBean orsb = new OrderResultServerBean();
-        List<FingerOrderResult> fingerOrderResults = new ArrayList<>();
-        List<CardOrderResult> cardOrderResult = new ArrayList<>();
+        JSONObject orderresult = new JSONObject();
+        JSONArray cardOrderResult = new JSONArray();
+        JSONArray fingerOrderResults = new JSONArray();
+//        OrderResultServerBean orsb = new OrderResultServerBean();
+//        List<FingerOrderResult> fingerOrderResults = new ArrayList<>();
+//        List<CardOrderResult> cardOrderResult = new ArrayList<>();
         for (OrderResultBean orb : orderHashMap.values()) {
             switch (orb.getType()) {//0:密码； 1：指纹；2：卡片;
                 case 0:
                     break;
                 case 1:
-                    FingerOrderResult fr = new FingerOrderResult();
-                    fr.setFinorderresult(orb.getOrderresult());
-                    fr.setRfids(orb.getIds());
-                    fingerOrderResults.add(fr);
+                    try {
+                        JSONObject fjson = new JSONObject();
+                        fjson.put("finorderresult", orb.getOrderresult());
+                        fjson.put("rfids", orb.getIds());
+                        fingerOrderResults.put(fjson);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+//                    FingerOrderResult fr = new FingerOrderResult();
+//                    fr.setFinorderresult(orb.getOrderresult());
+//                    fr.setRfids(orb.getIds());
                     break;
                 case 2:
-                    CardOrderResult cr = new CardOrderResult();
-                    cr.setCardorderresult(orb.getOrderresult());
-                    cr.setRcids(orb.getIds());
-                    cardOrderResult.add(cr);
+                    try {
+                        JSONObject cjson = new JSONObject();
+                        cjson.put("finorderresult", orb.getOrderresult());
+                        cjson.put("rfids", orb.getIds());
+                        cardOrderResult.put(cjson);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+//                    CardOrderResult cr = new CardOrderResult();
+//                    cr.setCardorderresult(orb.getOrderresult());
+//                    cr.setRcids(orb.getIds());
+//                    cardOrderResult.put(cr.toString());
                     break;
             }
         }
-        orsb.setFingerresult(SerializationDefine.List2Str(fingerOrderResults));
-        orsb.setCardresult(SerializationDefine.List2Str(cardOrderResult));
-        params.put("orderresult", SerializationDefine.Object2String(orsb));
+//        orsb.setFingerresult(SerializationDefine.List2Str(fingerOrderResults));
+//        orsb.setCardresult(SerializationDefine.List2Str(cardOrderResult));
+        try {
+            orderresult.put("fingerresult", fingerOrderResults);
+            orderresult.put("cardresult", cardOrderResult);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        params.put("orderresult", orderresult.toString());
         OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
             @Override
             public void onSuccess(BaseResponse br) {
@@ -341,6 +365,9 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
                             if (!orderHashMap.isEmpty()) {
                                 WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
                                 sendOrderToBt();
+                            } else {
+                                WaitTool.dismissDialog();
+                                ToastUtil.showText("该用户没有指令数据");
                             }
                         } else {
                             ToastUtil.showText(br.getErrMsg());

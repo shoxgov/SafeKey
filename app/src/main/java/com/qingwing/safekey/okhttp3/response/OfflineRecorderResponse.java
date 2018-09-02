@@ -2,6 +2,7 @@ package com.qingwing.safekey.okhttp3.response;
 
 
 /*
+={"order":"aaaa1100b8010103010900A90954205276","itid":11530,"errmsg":"","errcode":0}
 order	指令信息
 itid	获取离线记录原始id（用于返回指令执行结果）
   */
