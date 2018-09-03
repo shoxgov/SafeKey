@@ -99,11 +99,19 @@ public class LoginActivity extends BaseActivity {
             ToastUtil.showText("请先设置服务器IP");
             Intent setting = new Intent();
             setting.setClass(this, HostNameSettingActivity.class);
-            startActivity(setting);
+            startActivityForResult(setting, 13);
             return;
         }
         NetWorkConfig.HTTPS = "https://" + ips + ":" + port;//"https://s.keenzy.cn";
         requestRSAkey();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 13 && resultCode == RESULT_OK) {
+            requestRSAkey();
+        }
     }
 
     private void requestRSAkey() {
@@ -252,7 +260,7 @@ public class LoginActivity extends BaseActivity {
 //                mName.setVisibility(View.INVISIBLE);
 //                mPsw.setVisibility(View.INVISIBLE);
 //                inputAnimator(mInputLayout, mWidth, mHeight);
-                login("admin", "qingyixinxi");
+                login(username, pwd);
                 break;
         }
     }
@@ -274,7 +282,7 @@ public class LoginActivity extends BaseActivity {
     private void login(final String username, final String pwd) {
         if (TextUtils.isEmpty(SKApplication.rsaKeyid)) {
             requestRSAkey();
-            ToastUtil.showText("Keyid为空，请重新登录");
+            ToastUtil.showText("Keyid为空或者服务器连接异常,请重新设置服务器");
             return;
         }
         WaitTool.showDialog(this, "");
@@ -288,7 +296,6 @@ public class LoginActivity extends BaseActivity {
             public void onSuccess(BaseResponse br) {
                 super.onSuccess(br);
                 LoginResponse lr = (LoginResponse) br;
-
                 if (lr.getErrCode() == 0) {
                     if (cb.isChecked()) {
                         PreferenceUtil.commitString("username", username);
@@ -314,7 +321,7 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onFailure(int code, String message) {
                 super.onFailure(code, message);
-                ToastUtil.showText("request fail message=" + message);
+                ToastUtil.showText("服务器连接异常 " + message);
             }
         });
     }

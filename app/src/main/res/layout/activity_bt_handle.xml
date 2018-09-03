@@ -68,14 +68,14 @@
             <EditText
                 android:id="@+id/bt_handle_edit"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
+                android:layout_height="match_parent"
                 android:background="@null"
+                android:enabled="false"
                 android:gravity="top"
                 android:minLines="5"
                 android:padding="5dip"
                 android:text=""
-                android:textColor="@color/textblack" />
+                android:textColor="@drawable/textcolor_enable" />
         </LinearLayout>
     </ScrollView>
 

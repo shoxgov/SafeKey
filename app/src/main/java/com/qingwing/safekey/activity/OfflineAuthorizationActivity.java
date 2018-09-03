@@ -222,10 +222,6 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                     ToastUtil.showText("请输入结束时间");
                     return;
                 }
-                if (TextUtils.isEmpty(count)) {
-                    ToastUtil.showText("请输入有效次数");
-                    return;
-                }
                 Map<String, String> params2 = new HashMap<String, String>();
                 params2.put("token", SKApplication.loginToken);
                 params2.put("roomid", roomid);
@@ -337,7 +333,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                 LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
                 //创建旋转动画
                 OrderResultBean order = orderHashMap.get(runingOrderKey);
-                order.setOrderresult("result");
+                order.setOrderresult(ob.getObject().toString());
                 orderHashMap.remove(runingOrderKey);
                 orderHashMap.put(runingOrderKey, order);
                 if (orderKeyVector.isEmpty()) {
@@ -354,8 +350,8 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         TimePickerView pvTime = new TimePickerBuilder(this, new OnTimeSelectListener() {
             @Override
             public void onTimeSelect(Date date, View v) {
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");// HH:mm:ss
-                String facttime = DateTimePickDialogUtil.getDateString(date, simpleDateFormat).toString();
+//                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");// HH:mm:ss
+//                String facttime = DateTimePickDialogUtil.getDateString(date, simpleDateFormat).toString();
                 SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("HH:mm");// HH:mm:ss
                 String tagtime = DateTimePickDialogUtil.getDateString(date, simpleDateFormat2).toString();
                 if (TextUtils.isEmpty(tagtime)) {
@@ -397,7 +393,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         final String[] items = new String[person.size()];//{"我是1", "我是2", "我是3", "我是4"};
         int i = 0;
         for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : person) {
-            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode();
+            items[i] = "姓名：" + aui.getPersonname() + "  学号：" + aui.getPersoncode();
             i++;
         }
         AlertDialog.Builder listDialog =

@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
@@ -17,7 +16,6 @@ import com.qingwing.safekey.adapter.BtHandleAdapter;
 import com.qingwing.safekey.bean.BtHandleBean;
 import com.qingwing.safekey.bean.LockStatus;
 import com.qingwing.safekey.bean.LockStatusEmue;
-import com.qingwing.safekey.bluetooth.BLEAnylizeManager;
 import com.qingwing.safekey.bluetooth.BLECommandManager;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
@@ -29,8 +27,10 @@ import com.qingwing.safekey.okhttp3.http.OkHttpUtils;
 import com.qingwing.safekey.okhttp3.response.BaseResponse;
 import com.qingwing.safekey.okhttp3.response.OfflineRecorderResponse;
 import com.qingwing.safekey.okhttp3.response.OfflineUnlockResponse;
+import com.qingwing.safekey.okhttp3.response.UploadRecordResultResponse;
 import com.qingwing.safekey.utils.ListViewUtils;
 import com.qingwing.safekey.utils.ToastUtil;
+import com.qingwing.safekey.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -131,6 +131,9 @@ public class BtHandleActivity extends BaseActivity implements Observer {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            if (Utils.isFastDoubleClick()) {
+                return;
+            }
             switch (position) {
                 case 0:
 //                    Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
@@ -152,8 +155,11 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     delete.putExtra("roomid", selectDeviceId);
                     startActivity(delete);
                     break;
+
                 case 3:
-                    obatinOfflineUnlockCommand();
+//                    obatinOfflineUnlockCommand();
+                    WaitTool.showDialog(BtHandleActivity.this);
+                    BLECommandManager.offlineForceUnlock(BtHandleActivity.this, selectGatewayCode, luckId);
                     break;
                 case 4:
                     obtainOfflineRecorderCommand();
@@ -193,11 +199,11 @@ public class BtHandleActivity extends BaseActivity implements Observer {
      * itid	是	远程开门原始id
      * orderresult	是	指令执行结果
      */
-    private void submitOfflineUnlock() {
+    private void submitOfflineUnlock(String order) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("itid", offlineUnlockResponse.getItid());
-        params.put("orderresult", "1");
+        params.put("orderresult", order);
         OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_UNLOCK_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
             @Override
             public void onSuccess(BaseResponse br) {
@@ -279,10 +285,22 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     infoEdit.setText(data);
                 }
                 break;
+            case BleObserverConstance.RECEIVER_BT_FORCE_UNLUCK:
+                WaitTool.dismissDialog();
+                // 强制离线开锁返回，01代表正确，02代表当前门锁处于锁定状态，失败
+                String order = ob.getObject().toString();
+                String interceptData = order.substring(20, 22);
+                if (interceptData.equals("01")) {
+                    ToastUtil.showText("开锁成功");
+                    submitOfflineUnlock(order);
+                } else if (interceptData.equals("02")) {
+                    ToastUtil.showText("门锁处于锁定状态，无法开锁");
+                }
+                break;
             case BleObserverConstance.BOX_CONNTEC_BLE_STATUS:
                 if ((boolean) ob.getObject()) {
                 } else {
-                    ToastUtil.showText("蓝牙已断开");
+                    ToastUtil.showText("蓝牙断开连接成功");
                     finish();
                 }
                 break;
@@ -331,26 +349,35 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                 break;
             //接收离线上传记录
             case BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD:
+                if (ob.getObject().toString().subSequence(40, 44).equals("0000") && ob.getObject().toString().substring(44, 46).equals("00")) {
+                    ToastUtil.showText("没有可上传记录信息");
+                    WaitTool.dismissDialog();
+                    return;
+                }
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("token", SKApplication.loginToken);
                 params.put("itid", offlineRecorderResponse.getItid());
                 params.put("record", ob.getObject().toString());
-                final String recordNum = ob.getObject().toString().substring(44, 46);
-                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_RECORDER_SAVE_RESULT, params, BaseResponse.class, new HttpCallback() {
+//                final String recordNum = ob.getObject().toString().substring(44, 46);
+                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_AUTHORY_RECORDER_SAVE_RESULT, params, UploadRecordResultResponse.class, new HttpCallback() {
                     @Override
                     public void onSuccess(BaseResponse br) {
                         super.onSuccess(br);
+                        UploadRecordResultResponse urrr = (UploadRecordResultResponse) br;
                         WaitTool.dismissDialog();
-                        if (br.getErrCode() == 0) {
+                        if (urrr.getErrCode() == 0) {
                             ToastUtil.showText("离线上传记录成功");
-                            if (offlineRecorderResponse != null) {
-                                String orignOrder = offlineRecorderResponse.getOrder();
-                                StringBuffer newOrder = new StringBuffer();
-                                newOrder.append(orignOrder.substring(0, 20)).append("10A9").append(orignOrder.substring(24, 30)).append(recordNum);
-                                Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-                                intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, BLECommandManager.getSendBlueId(newOrder.toString(), "", ""));
-                                sendBroadcast(intent);
-                            }
+                            Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+                            intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, urrr.getResultOrder());
+                            sendBroadcast(intent);
+//                            if (offlineRecorderResponse != null) {
+//                                String orignOrder = offlineRecorderResponse.getOrder();
+//                                StringBuffer newOrder = new StringBuffer();
+//                                newOrder.append(orignOrder.substring(0, 20)).append("01A9").append(orignOrder.substring(24, 30)).append(recordNum);
+//                                Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+//                                intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, BLECommandManager.getSendBlueId(newOrder.toString(), "", ""));
+//                                sendBroadcast(intent);
+//                            }
                         } else {
                             ToastUtil.showText(br.getErrMsg());
                         }

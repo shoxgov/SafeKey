@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.os.NetworkOnMainThreadException;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.view.View;
+import android.widget.TextView;
 
 import com.chad.library.adapter.base.BaseViewHolder;
 import com.qingwing.safekey.NetWorkConfig;
@@ -198,7 +200,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     mHandler.sendEmptyMessage(1);
                 }
             }
-        }, 1000, 5000, TimeUnit.MILLISECONDS);//表示延迟100微秒后每750微秒执行一次。
+        }, 500, 5000, TimeUnit.MILLISECONDS);//表示延迟100微秒后每750微秒执行一次。
     }
 
     @Override
@@ -363,11 +365,31 @@ public class ScanListActivity extends BaseActivity implements Observer {
             final DeviceListResponse.DeviceInfo bdi = (DeviceListResponse.DeviceInfo) itemModel;
             baseViewHolder.setText(R.id.scan_bt_addr, bdi.getDevicename());
             baseViewHolder.setText(R.id.scan_bt_mode, "类型：" + bdi.getDevicetypename());
+            /*-60 ~ 0   4
+              -70 ~ -60 3
+              -80 ~ -70 2
+               <-80     1
+               */
+            TextView rssiTv = (TextView) baseViewHolder.getView(R.id.scan_bt_rssi);
             if (bdi.isOnline()) {
-                baseViewHolder.setText(R.id.scan_bt_rssi, "" + bdi.getRssi());
+                Drawable drawableTop;
+                int rssi = bdi.getRssi();
+                if (rssi > -60) {
+                    drawableTop = getResources().getDrawable(R.mipmap.bt_rssi_4);
+                } else if (rssi > -70) {
+                    drawableTop = getResources().getDrawable(R.mipmap.bt_rssi_3);
+                } else if (rssi > -80) {
+                    drawableTop = getResources().getDrawable(R.mipmap.bt_rssi_2);
+                } else {
+                    drawableTop = getResources().getDrawable(R.mipmap.bt_rssi_1);
+                }
+                rssiTv.setCompoundDrawablesWithIntrinsicBounds(null, drawableTop, null, null);
+                rssiTv.setCompoundDrawablePadding(5);
+                rssiTv.setText("" + bdi.getRssi());
                 baseViewHolder.setImageResource(R.id.scan_bt_status, R.mipmap.bluetooth_online);
             } else {
-                baseViewHolder.setText(R.id.scan_bt_rssi, "");
+                rssiTv.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
+                rssiTv.setText("");
                 baseViewHolder.setImageResource(R.id.scan_bt_status, R.mipmap.bluetooth_disconnect);
             }
             if (selectDeviceId.equals(bdi.getDeviceid())) {
@@ -398,7 +420,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                         });
                         warnDialog.show();
                     } else {
-//                        ToastUtil.showText("该设备不在附近或者搜索不到");
+                        ToastUtil.showText("该设备不在线不可连接");
                     }
                     recyclerSwipeLayout.notifyDataSetChanged();
                 }

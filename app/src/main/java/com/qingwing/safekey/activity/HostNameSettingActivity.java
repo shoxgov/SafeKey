@@ -87,6 +87,7 @@ public class HostNameSettingActivity extends BaseActivity {
         PreferenceUtil.commitString("hostPort", ports);
         ToastUtil.showText("设置成功");
         NetWorkConfig.HTTPS = "https://" + ips + ":" + ports;
+        setResult(RESULT_OK);
         finish();
     }
 }

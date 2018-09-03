@@ -140,7 +140,13 @@ public class BLEAnylizeManager {
             obj.setWhat(BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT);
             obj.setObject(data);
             ObserverManager.getObserver().setMessage(obj);
-        } else {
+        } else if (interceptData.equals("01AA") || interceptData.equals("02AA")) { // 强制离线开锁返回，01代表正确，02代表当前门锁处于锁定状态，失败
+            ObservableBean obj = new ObservableBean();
+            obj.setWhat(BleObserverConstance.RECEIVER_BT_FORCE_UNLUCK);
+            obj.setObject(data);
+            ObserverManager.getObserver().setMessage(obj);
+        }else
+        {
 //            ObservableBean obj = new ObservableBean();
 //            obj.setWhat(BleObserverConstance.BOX_RECEIVER_INFO_UNKNOW);
 //            ObserverManager.getObserver().setMessage(obj);

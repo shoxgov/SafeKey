@@ -211,7 +211,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
             } else if (aui.getSqtype().equals("3")) {
                 type = "卡片";
             }
-            items[i] = "姓名：" + aui.getPersonname() + "    学号：" + aui.getPersoncode() + "\n授权类型：" + type;
+            items[i] = "姓名：" + aui.getPersonname() + "  学号：" + aui.getPersoncode() + "\n授权类型：" + type;
             i++;
         }
         AlertDialog.Builder listDialog =

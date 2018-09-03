@@ -192,6 +192,7 @@
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
             android:paddingTop="5dip"
+            android:text="00:00"
             android:textSize="@dimen/font_normal" />
     </LinearLayout>
 
@@ -217,6 +218,7 @@
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
             android:paddingTop="5dip"
+            android:text="23:59"
             android:textSize="@dimen/font_normal" />
     </LinearLayout>
 
@@ -237,7 +239,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:hint="无"
+            android:hint="不传代表无限次"
             android:inputType="number"
             android:paddingBottom="5dip"
             android:paddingLeft="10dip"

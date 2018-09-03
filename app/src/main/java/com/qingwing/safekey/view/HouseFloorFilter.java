@@ -120,8 +120,10 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                 housePop.dismiss();
             }
             houseTv.setText(houseDate.get(position).getAgname());
-            requestFloor(houseDate.get(position).getAgid());
             houseSelectid = houseDate.get(position).getAgid();
+            floorTv.setText("请选择楼层");
+            floorSelectid = "";
+            requestFloor(houseDate.get(position).getAgid());
         }
     };
     private AdapterView.OnItemClickListener floorItemClickListener = new AdapterView.OnItemClickListener() {

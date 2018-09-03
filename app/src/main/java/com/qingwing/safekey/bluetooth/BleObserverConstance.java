@@ -34,6 +34,10 @@ public class BleObserverConstance {
      */
     public static final int RECEIVER_BT_SATUS = 10118;
     /**
+     * RECEIVER_BT_FORCE_UNLUCK:  强制开锁回复
+     */
+    public static final int RECEIVER_BT_FORCE_UNLUCK = 10128;
+    /**
      * RECEIVER_OFFLINE_UPLOAD_RECORD:  接收离线上传记录
      */
     public static final int RECEIVER_OFFLINE_UPLOAD_RECORD = 10119;

@@ -63,8 +63,32 @@ public class BLECommandManager {
         try {
             LogUtil.d("查询状态");
             Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-            String str = "AAAA" + "11" + gatewayCode + roomid + "00A0" + getThreeSystemTime();
-            intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, getSendBlueId(str, "", ""));
+            StringBuffer newOrder = new StringBuffer();
+            newOrder.append("AAAA11").append(gatewayCode).append(roomid).append("00A0").append(getThreeSystemTime());
+            intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, getSendBlueId(newOrder.toString(), "", ""));
+            context.sendBroadcast(intent);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /* 3.5.7	 00 AA 强行/远程开门
+               若门锁处于被锁定状态，该指令不能使用。
+               步骤1：服务器下发指令
+               AA AA|				数据包头
+               xx|					包长，若为小无线通讯数据，则包长不含前3字节
+               00 01 02 01 04		     网关地址（5字节），0001学校，2栋1层04号网关
+               03 10|    			门锁ID（头2字节）（2栋310房间）
+               00 AA|				命令（2字节）
+               13 14 09 |  	         服务器当前时间（6字节，年月日时分秒）
+               xx xx					校验（2字节）*/
+    public static void offlineForceUnlock(Context context, String gatewayCode, String roomid) {
+        try {
+            LogUtil.d("强制离线开锁");
+            Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
+            StringBuffer newOrder = new StringBuffer();
+            newOrder.append("AAAA11").append(gatewayCode).append(roomid).append("00AA").append(getThreeSystemTime());
+            intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, getSendBlueId(newOrder.toString(), "", ""));
             context.sendBroadcast(intent);
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,7 +108,7 @@ public class BLECommandManager {
         String hexStr = "0123456789ABCDEF";
         //将小写字母编写成大写字母。
         String content;
-        if (blueInfo.startsWith("AAAA") || blueInfo.startsWith("BBBB")) {
+        if (blueInfo.toUpperCase().startsWith("AAAA") || blueInfo.toUpperCase().startsWith("BBBB")) {
             content = blueInfo.toUpperCase();
         } else {
             content = "AAAA" + blueInfo.toUpperCase() + code.toUpperCase() + time.toUpperCase();
