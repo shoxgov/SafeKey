@@ -129,7 +129,7 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
     private AdapterView.OnItemClickListener floorItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            if (floorPop != null && floorPop.isShowing()) {
+            if (floorPop != null /*&& floorPop.isShowing()*/) {
                 floorPop.dismiss();
             }
             floorTv.setText(floorDate.get(position).getAgname());
@@ -154,6 +154,14 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                 floorlist.add(fi.getAgname());
             }
         }
+        if (floorlist.isEmpty()) {
+            ToastUtil.showText("该楼栋没有楼层");
+            return;
+        }
+        if (floorPop != null) {
+            floorPop.dismiss();
+            floorPop = null;
+        }
         floorPop = new SpinerPopWindow<String>(mContext, floorlist, floorItemClickListener);
         floorPop.setOnDismissListener(dismissListener);
     }
@@ -177,12 +185,12 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                 if (housePop == null) {
                     return;
                 }
-                if (floorPop != null && floorPop.isShowing()) {
-                    floorPop.dismiss();
-                }
-                if (modelPop != null && modelPop.isShowing()) {
-                    modelPop.dismiss();
-                }
+//                if (floorPop != null) {
+//                    floorPop.dismiss();
+//                }
+//                if (modelPop != null) {
+//                    modelPop.dismiss();
+//                }
                 housePop.setWidth(houseLayout.getWidth());
                 housePop.showUp(houseLayout);
                 break;
@@ -191,12 +199,12 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                     ToastUtil.showText("请选择楼栋");
                     return;
                 }
-                if (housePop != null && housePop.isShowing()) {
-                    housePop.dismiss();
-                }
-                if (modelPop != null && modelPop.isShowing()) {
-                    modelPop.dismiss();
-                }
+//                if (housePop != null) {
+//                    housePop.dismiss();
+//                }
+//                if (modelPop != null) {
+//                    modelPop.dismiss();
+//                }
                 int[] flocation = new int[2];
                 floorLayout.getLocationOnScreen(flocation);
                 //在控件上方显示
@@ -208,12 +216,12 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                 if (modelPop == null) {
                     return;
                 }
-                if (floorPop != null && floorPop.isShowing()) {
-                    floorPop.dismiss();
-                }
-                if (housePop != null && housePop.isShowing()) {
-                    housePop.dismiss();
-                }
+//                if (floorPop != null) {
+//                    floorPop.dismiss();
+//                }
+//                if (housePop != null ) {
+//                    housePop.dismiss();
+//                }
                 modelPop.setWidth(modelLayout.getWidth());
                 modelPop.showUp(modelLayout);
                 break;
@@ -321,4 +329,20 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
         });
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        if (housePop != null) {
+            housePop.dismiss();
+            housePop = null;
+        }
+        if (floorPop != null) {
+            floorPop.dismiss();
+            floorPop = null;
+        }
+        if (modelPop != null) {
+            modelPop.dismiss();
+            modelPop = null;
+        }
+    }
 }

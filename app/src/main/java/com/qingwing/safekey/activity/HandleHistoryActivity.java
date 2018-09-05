@@ -23,6 +23,7 @@ import com.qingwing.safekey.okhttp3.http.OkHttpUtils;
 import com.qingwing.safekey.okhttp3.response.BaseResponse;
 import com.qingwing.safekey.okhttp3.response.DeviceHistoryListResponse;
 import com.qingwing.safekey.utils.ToastUtil;
+import com.qingwing.safekey.utils.Utils;
 import com.qingwing.safekey.view.DateTimePickDialogUtil;
 import com.qingwing.safekey.view.RecyclerViewSwipeLayout;
 import com.qingwing.safekey.view.TitleBar;
@@ -65,6 +66,8 @@ public class HandleHistoryActivity extends BaseActivity {
         ButterKnife.bind(this);
         selectDeviceType = getIntent().getStringExtra("selectDeviceType");
         selectDeviceId = getIntent().getStringExtra("selectDeviceId");
+        startDate.setTag("");
+        endDate.setTag("");
         init();
     }
 
@@ -169,6 +172,9 @@ public class HandleHistoryActivity extends BaseActivity {
 
     @OnClick({R.id.history_start_date, R.id.history_end_date, R.id.history_date_ok})
     public void onViewClicked(View view) {
+        if (Utils.isFastDoubleClick()) {
+            return;
+        }
         switch (view.getId()) {
             case R.id.history_start_date:
                 dateSelect(0);
@@ -177,14 +183,14 @@ public class HandleHistoryActivity extends BaseActivity {
                 dateSelect(1);
                 break;
             case R.id.history_date_ok:
-                if (startDate.getTag() == null) {
-                    ToastUtil.showText("请选择开始时间");
-                    return;
-                }
-                if (endDate.getTag() == null) {
-                    ToastUtil.showText("请选择结束时间");
-                    return;
-                }
+//                if (startDate.getTag() == null) {
+//                    ToastUtil.showText("请选择开始时间");
+//                    return;
+//                }
+//                if (endDate.getTag() == null) {
+//                    ToastUtil.showText("请选择结束时间");
+//                    return;
+//                }
                 recyclerSwipeLayout.setNewData(new ArrayList<DeviceHistoryListResponse.DeviceHistoryInfo>());
                 requestHistory();
                 break;

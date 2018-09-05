@@ -33,6 +33,15 @@ public class OfflineAuthoryUserInfoResponse extends BaseResponse {
     public class AuthoryUserInfo{
         private String personcode;
         private String personname;
+        private int roomcardtype;
+
+        public int getRoomcardtype() {
+            return roomcardtype;
+        }
+
+        public void setRoomcardtype(int roomcardtype) {
+            this.roomcardtype = roomcardtype;
+        }
 
         public String getPersoncode() {
             return personcode;

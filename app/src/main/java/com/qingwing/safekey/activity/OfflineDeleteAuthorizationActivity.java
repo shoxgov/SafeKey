@@ -313,10 +313,10 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         switch (v.getId()) {
             case R.id.offline_del_authory_search_ok:
                 String key = searchEdit.getText().toString();
-                if (!TextUtils.isEmpty(key)) {
+//                if (!TextUtils.isEmpty(key)) {
                     WaitTool.showDialog(this);
                     rquestOfflineDelUser(key);
-                }
+//                }
                 break;
 
             case R.id.offline_del_send:
@@ -332,7 +332,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
                 for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo daui : tempData) {
                     OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
                     rb.setRoombacktype(daui.getSqtype());
-                    rb.setRoombackid(daui.getSqid());
+                    rb.setRoombackid(daui.getPersoncode());
                     roomback.add(rb);
                 }
                 params.put("roomback", SerializationDefine.List2Str(roomback));

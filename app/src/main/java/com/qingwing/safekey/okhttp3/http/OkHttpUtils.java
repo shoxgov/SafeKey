@@ -209,7 +209,7 @@ public class OkHttpUtils {
             params = new HashMap<>();
         }
         url = NetWorkConfig.HTTPS + url;
-        LogUtil.d("postAsyn url=" + url);
+        LogUtil.d("postAsyn url=" + url+"  params="+params.values().toString());
         Request request = OkHttpRequest.builderRequest(HttpMethodType.POST, url, params, null);
         OkHttpRequest.doEnqueue(request, baseResponseClass, callback);
     }

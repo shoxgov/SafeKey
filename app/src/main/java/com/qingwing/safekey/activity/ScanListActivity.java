@@ -38,6 +38,7 @@ import com.qingwing.safekey.okhttp3.response.BaseResponse;
 import com.qingwing.safekey.okhttp3.response.DeviceListResponse;
 import com.qingwing.safekey.okhttp3.response.LoginResponse;
 import com.qingwing.safekey.utils.LogUtil;
+import com.qingwing.safekey.utils.PreferenceUtil;
 import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 import com.qingwing.safekey.view.HouseFloorFilter;
@@ -200,12 +201,15 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     mHandler.sendEmptyMessage(1);
                 }
             }
-        }, 500, 5000, TimeUnit.MILLISECONDS);//表示延迟100微秒后每750微秒执行一次。
+        }, 4000, 5000, TimeUnit.MILLISECONDS);//表示延迟100微秒后每750微秒执行一次。
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+//        if(bluetoothService != null){
+//            bluetoothService.startBLEscan();
+//        }
     }
 
     @Override
@@ -283,7 +287,18 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 requestDevices(house, floor, device);
             }
         });
-        requestDevices("", "", "");//传空获取默认授权列表
+        PreferenceUtil.init(this);
+        String lastHouse = PreferenceUtil.getString("lastHouse", "");
+        String lastFloor = PreferenceUtil.getString("lastFloor", "");
+        String lastModel = PreferenceUtil.getString("lastModel", "");
+        if (!TextUtils.isEmpty(lastHouse) && !TextUtils.isEmpty(lastFloor) && !TextUtils.isEmpty(lastModel)) {
+            selectHouseId = lastHouse;
+            selectFloorId = lastFloor;
+            selectDeviceType = lastModel;
+            requestDevices(lastHouse, lastFloor, lastModel);
+        } else {
+            requestDevices("", "", "");//传空获取默认授权列表
+        }
     }
 
     /* token	是	令牌
@@ -292,7 +307,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
      devicetype	否	设备类型
      rows	是	每页记录数
      page	是	页数*/
-    private void requestDevices(String house, String floor, String device) {
+    private void requestDevices(final String house, final String floor, final String device) {
         Map<String, String> params = new HashMap<String, String>();
         params.put("token", SKApplication.loginToken);
         params.put("ldid", house);
@@ -322,6 +337,9 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     for (DeviceListResponse.DeviceInfo di : deviceTemp) {
                         deviceList.add(di);
                     }
+                    PreferenceUtil.commitString("lastHouse", house);
+                    PreferenceUtil.commitString("lastFloor", floor);
+                    PreferenceUtil.commitString("lastModel", device);
                     mHandler.removeMessages(0);
                     mHandler.sendEmptyMessage(0);
                 } else {
@@ -347,6 +365,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 LoginResponse lr = (LoginResponse) br;
                 if (lr.getErrCode() == 0) {
                     SKApplication.loginToken = lr.getToken();
+                    PreferenceUtil.commitString("token", SKApplication.loginToken);
                 } else {
                 }
             }
@@ -384,7 +403,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     drawableTop = getResources().getDrawable(R.mipmap.bt_rssi_1);
                 }
                 rssiTv.setCompoundDrawablesWithIntrinsicBounds(null, drawableTop, null, null);
-                rssiTv.setCompoundDrawablePadding(5);
+                rssiTv.setCompoundDrawablePadding(0);
                 rssiTv.setText("" + bdi.getRssi());
                 baseViewHolder.setImageResource(R.id.scan_bt_status, R.mipmap.bluetooth_online);
             } else {

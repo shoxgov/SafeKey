@@ -136,7 +136,30 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
             }
 
         });
+//        settleRg.setOnCheckedChangeListener(onCheckedChangeListener);
     }
+
+    RadioGroup.OnCheckedChangeListener onCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
+
+        @Override
+        public void onCheckedChanged(RadioGroup group, int checkedId) {
+            View viewById = settleRg.findViewById(checkedId);
+            if (!viewById.isPressed()) {
+                return;
+            }
+            switch (checkedId) {
+                case R.id.offline_authory_settle_type_1:
+
+                    break;
+                case R.id.offline_authory_settle_type_2:
+
+                    break;
+                case R.id.offline_authory_settle_type_3:
+
+                    break;
+            }
+        }
+    };
 
     @OnClick({R.id.offline_authory_search_ok, R.id.offline_authory_start_time, R.id.offline_authory_end_time, R.id.offline_authory_send})
     public void onViewClicked(View view) {
@@ -225,40 +248,53 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                 Map<String, String> params2 = new HashMap<String, String>();
                 params2.put("token", SKApplication.loginToken);
                 params2.put("roomid", roomid);
-                List<OfflineAuthoryUserInfoResponse.AuthoryUserInfo> tempData = adapter.getData();
-                if (tempData == null || tempData.isEmpty()) {
-                    ToastUtil.showText("请添加授权用户");
-                    return;
-                }
-                List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
-                for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : tempData) {
+                if (settleRg.getCheckedRadioButtonId() == R.id.offline_authory_settle_type_1) {
+                    List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
                     OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
+                    oui.setRoomcardtype(1);
+                    String pwd = pwdEdit.getText().toString();
+                    if (TextUtils.isEmpty(pwd)) {
+                        ToastUtil.showText("请输入授权密码");
+                        return;
+                    }
+                    if (pwd.length() != 6) {
+                        ToastUtil.showText("请输入6位授权密码");
+                        return;
+                    }
+                    oui.setPersoncode("");
                     oui.setSdate(startTime);
                     oui.setEdate(endTime);
-                    oui.setRccount(count);
-                    oui.setPersoncode(aui.getPersoncode());
-                    switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
-                        case R.id.offline_authory_settle_type_1:
-                            oui.setRoomcardtype(1);
-                            String pwd = pwdEdit.getText().toString();
-                            if (TextUtils.isEmpty(pwd)) {
-                                ToastUtil.showText("请输入授权密码");
-                                return;
-                            }
-                            oui.setPassword(pwd);
-                            break;
-                        case R.id.offline_authory_settle_type_2:
-                            oui.setRoomcardtype(2);
-                            oui.setPassword("");
-                            break;
-                        case R.id.offline_authory_settle_type_3:
-                            oui.setRoomcardtype(3);
-                            oui.setPassword("");
-                            break;
-                    }
+                    oui.setPassword(pwd);
                     roomcard.add(oui);
+                    params2.put("roomcard", SerializationDefine.List2Str(roomcard));
+                } else {
+                    List<OfflineAuthoryUserInfoResponse.AuthoryUserInfo> tempData = adapter.getData();
+                    if (tempData == null || tempData.isEmpty()) {
+                        ToastUtil.showText("请添加授权用户");
+                        return;
+                    }
+                    List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
+                    for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : tempData) {
+                        OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
+                        oui.setSdate(startTime);
+                        oui.setEdate(endTime);
+                        oui.setRccount(count);
+                        switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
+                            case R.id.offline_authory_settle_type_2:
+                                oui.setRoomcardtype(aui.getRoomcardtype());
+                                oui.setPassword("");
+                                oui.setPersoncode(aui.getPersoncode());
+                                break;
+                            case R.id.offline_authory_settle_type_3:
+                                oui.setRoomcardtype(aui.getRoomcardtype());
+                                oui.setPassword("");
+                                oui.setPersoncode(aui.getPersoncode());
+                                break;
+                        }
+                        roomcard.add(oui);
+                    }
+                    params2.put("roomcard", SerializationDefine.List2Str(roomcard));
                 }
-                params2.put("roomcard", SerializationDefine.List2Str(roomcard));
                 WaitTool.showDialog(this);
                 OkHttpUtils.postAsyn(NetWorkConfig.OBTAIN_OFFLINE_AUTHORY_SAVE, params2, OrderResponse.class, new HttpCallback() {
                     @Override
@@ -294,6 +330,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                                 ToastUtil.showText("该用户没有指令数据");
                             }
                         } else {
+                            WaitTool.dismissDialog();
                             ToastUtil.showText(or.getErrMsg());
                         }
                     }
@@ -378,6 +415,16 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         AffirmDialog warnDialog = new AffirmDialog(OfflineAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
+                switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
+                    case R.id.offline_authory_settle_type_1:
+                        break;
+                    case R.id.offline_authory_settle_type_2:
+                        person.setRoomcardtype(2);
+                        break;
+                    case R.id.offline_authory_settle_type_3:
+                        person.setRoomcardtype(3);
+                        break;
+                }
                 adapter.addData(person);
             }
 

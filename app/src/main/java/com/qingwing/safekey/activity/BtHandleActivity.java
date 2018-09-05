@@ -2,12 +2,13 @@ package com.qingwing.safekey.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.text.method.ScrollingMovementMethod;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
@@ -32,7 +33,9 @@ import com.qingwing.safekey.utils.ListViewUtils;
 import com.qingwing.safekey.utils.ToastUtil;
 import com.qingwing.safekey.utils.Utils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +57,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
 //    @Bind(R.id.bt_handle_test)
 //    EditText commandEdit;
     @Bind(R.id.bt_handle_edit)
-    EditText infoEdit;
+    TextView infoEdit;
     @Bind(R.id.bt_handle_list)
     ListView listView;
     /**
@@ -67,11 +70,14 @@ public class BtHandleActivity extends BaseActivity implements Observer {
     private OfflineUnlockResponse offlineUnlockResponse;
     private OfflineRecorderResponse offlineRecorderResponse;
 
+//    private StringBuffer recordInfo = new StringBuffer();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bt_handle);
         ButterKnife.bind(this);
+//        recordInfo.setLength(200);
         ObserverManager.getObserver().addObserver(this);
         selectHouseId = getIntent().getStringExtra("selectHouseId");
         selectFloorId = getIntent().getStringExtra("selectFloorId");
@@ -83,6 +89,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
     }
 
     private void init() {
+        infoEdit.setMovementMethod(ScrollingMovementMethod.getInstance());
 //        testInfo.setText("收到 selectHouseId=" + selectHouseId + ",selectFloorId=" + selectFloorId + ",selectDeviceType=" + selectDeviceType);
         BtHandleAdapter adapter = new BtHandleAdapter(this);
         listView.setAdapter(adapter);
@@ -110,6 +117,20 @@ public class BtHandleActivity extends BaseActivity implements Observer {
         adapter.setData(data);
         listView.setOnItemClickListener(onItemClickListener);
         ListViewUtils.setListViewHeightBasedOnChildren(listView);
+    }
+
+    private static String getThreeSystemTime() {
+        Date date = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd HH:mm:ss");
+        return dateFormat.format(date);
+    }
+
+    void refreshLogView(String msg) {
+        infoEdit.append(getThreeSystemTime() + ">>>" + msg);
+        int offset = infoEdit.getLineCount() * infoEdit.getLineHeight();
+        if (offset > infoEdit.getHeight()) {
+            infoEdit.scrollTo(0, offset - infoEdit.getHeight());
+        }
     }
 
     @Override
@@ -157,9 +178,9 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     break;
 
                 case 3:
-//                    obatinOfflineUnlockCommand();
                     WaitTool.showDialog(BtHandleActivity.this);
-                    BLECommandManager.offlineForceUnlock(BtHandleActivity.this, selectGatewayCode, luckId);
+                    obatinOfflineUnlockCommand();
+//                    BLECommandManager.offlineForceUnlock(BtHandleActivity.this, selectGatewayCode, luckId);
                     break;
                 case 4:
                     obtainOfflineRecorderCommand();
@@ -209,6 +230,8 @@ public class BtHandleActivity extends BaseActivity implements Observer {
             public void onSuccess(BaseResponse br) {
                 super.onSuccess(br);
                 if (br.getErrCode() == 0) {
+                    ToastUtil.showText("上传服务器成功");
+                    refreshLogView("离线开锁上传服务器成功\n");
                 } else {
                     ToastUtil.showText(br.getErrMsg());
                 }
@@ -277,14 +300,14 @@ public class BtHandleActivity extends BaseActivity implements Observer {
     public void update(Observable arg0, Object obj) {
         ObservableBean ob = (ObservableBean) obj;
         switch (ob.getWhat()) {
-            case BleObserverConstance.BOX_RECEIVER_READINFO:
-                String data = ob.getObject().toString();
-                if (TextUtils.isEmpty(data)) {
-                    infoEdit.setText("null");
-                } else {
-                    infoEdit.setText(data);
-                }
-                break;
+//            case BleObserverConstance.BOX_RECEIVER_READINFO:
+//                String data = ob.getObject().toString();
+//                if (TextUtils.isEmpty(data)) {
+//                    infoEdit.setText("null");
+//                } else {
+//                    infoEdit.setText(data);
+//                }
+//                break;
             case BleObserverConstance.RECEIVER_BT_FORCE_UNLUCK:
                 WaitTool.dismissDialog();
                 // 强制离线开锁返回，01代表正确，02代表当前门锁处于锁定状态，失败
@@ -292,9 +315,15 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                 String interceptData = order.substring(20, 22);
                 if (interceptData.equals("01")) {
                     ToastUtil.showText("开锁成功");
+//                    recordInfo.append("开锁成功\n");
+                    refreshLogView("开锁成功\n");
+//                    infoEdit.setText(recordInfo.toString());
                     submitOfflineUnlock(order);
                 } else if (interceptData.equals("02")) {
                     ToastUtil.showText("门锁处于锁定状态，无法开锁");
+//                    recordInfo.append("门锁处于锁定状态，无法开锁\n");
+                    refreshLogView("门锁处于锁定状态，无法开锁\n");
+//                    infoEdit.setText(recordInfo.toString());
                 }
                 break;
             case BleObserverConstance.BOX_CONNTEC_BLE_STATUS:
@@ -335,7 +364,7 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                     lockStatus.deleteCharAt(lockStatus.length() - 1);
                 }
                 StringBuffer sb = new StringBuffer();
-                sb.append("网关地址:").append(ls.getAddr()).append("\n")
+                sb.append("门锁状态:\n").append("网关地址:").append(ls.getAddr()).append("\n")
                         .append("生命周期状态:").append(lockStatus).append("\n")
                         .append("时分秒:").append(ls.getTime()).append("\n")
                         .append("电量:").append(ls.getElectricValue() + "%").append("\n")
@@ -345,12 +374,17 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                         .append("授权卡数量:").append(ls.getAuthoryCardNum()).append("\n")
                         .append("记录条数信息:").append(ls.getRecordNum()).append("\n")
                         .append("版本号:").append(ls.getVersonCode()).append("\n");
-                infoEdit.setText(sb.toString());
+//                recordInfo.append(sb.toString());
+                refreshLogView(sb.toString());
+//                infoEdit.setText(recordInfo.toString());
                 break;
             //接收离线上传记录
             case BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD:
                 if (ob.getObject().toString().subSequence(40, 44).equals("0000") && ob.getObject().toString().substring(44, 46).equals("00")) {
                     ToastUtil.showText("没有可上传记录信息");
+//                    recordInfo.append("没有可上传记录信息\n");
+                    refreshLogView("没有可上传记录信息\n");
+//                    infoEdit.setText(recordInfo.toString());
                     WaitTool.dismissDialog();
                     return;
                 }
@@ -367,6 +401,8 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                         WaitTool.dismissDialog();
                         if (urrr.getErrCode() == 0) {
                             ToastUtil.showText("离线上传记录成功");
+//                            recordInfo.append("离线上传记录成功\n");
+                            infoEdit.setText("离线上传记录成功\n");
                             Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
                             intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, urrr.getResultOrder());
                             sendBroadcast(intent);
