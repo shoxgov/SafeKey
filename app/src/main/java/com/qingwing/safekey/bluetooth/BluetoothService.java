@@ -72,10 +72,6 @@ public class BluetoothService extends Service {
     private BluetoothGattCharacteristic dataCharacterstic;
     private HashMap<String, BtDeviceInfo> blueIdAddress = new HashMap<String, BtDeviceInfo>();
     /**
-     * 蓝牙是否连接上
-     */
-    public static boolean isConnected = false;
-    /**
      * 是否在扫描设备中
      */
     public static boolean isScanning = false;
@@ -225,7 +221,6 @@ public class BluetoothService extends Service {
         LogUtil.d("onCreate start BluetoothService >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
         super.onCreate();
         isScanning = false;
-        isConnected = false;
         initBluetoothManager();
         initReceiver();
         anylizeBleThreadPool.scheduleAtFixedRate(anylizeBleData, 300, 300, TimeUnit.MILLISECONDS);
@@ -271,7 +266,6 @@ public class BluetoothService extends Service {
             e.printStackTrace();
         }
         isScanning = false;
-        isConnected = false;
         stopSelf();
         super.onDestroy();
     }
@@ -279,23 +273,25 @@ public class BluetoothService extends Service {
     private void addScanDevice(BluetoothDevice device, int rssi, byte[] scanRecord) {
         try {
             String interceptCompany = BlueDeviceUtils.binaryToHexString(scanRecord);
-            Log.d("QBT", "deviceName=" + device.getName() + ",addScanDevice: " + interceptCompany);
+            String deviceName = device.getName();
+            String deviceAddr = device.getAddress();
+            Log.d("QBT", "deviceName=" + deviceName + ",addScanDevice: " + interceptCompany);
 //            String blueId = BlueDeviceUtils.interceptInitString(interceptCompany);
 //            LogUtil.d("设备的MAC地址和蓝牙ID  " + device.getAddress() + ":" + blueId);
-            if (TextUtils.isEmpty(device.getName())) {
+            if (TextUtils.isEmpty(deviceName)) {
                 return;
             }
-            if (!blueIdAddress.containsKey(device.getAddress())) {
+            if (!blueIdAddress.containsKey(deviceAddr)) {
                 BtDeviceInfo bdi = new BtDeviceInfo();
-                bdi.setAddress(device.getAddress());
+                bdi.setAddress(deviceAddr);
                 bdi.setRssi(rssi);
-                bdi.setName(device.getName());
-                blueIdAddress.put(device.getAddress(), bdi);
+                bdi.setName(deviceName);
+                blueIdAddress.put(deviceAddr, bdi);
             } else {
-                BtDeviceInfo bdi = blueIdAddress.get(device.getAddress());
+                BtDeviceInfo bdi = blueIdAddress.get(deviceAddr);
                 bdi.setRssi(rssi);
-                blueIdAddress.remove(device.getAddress());
-                blueIdAddress.put(device.getAddress(), bdi);
+                blueIdAddress.remove(deviceAddr);
+                blueIdAddress.put(deviceAddr, bdi);
             }
 //            if (UserInfo.UserBindState && !TextUtils.isEmpty(blueId)) {
 //                if (blueId.contains(UserInfo.BlueId) && !isConnected) {
@@ -331,10 +327,6 @@ public class BluetoothService extends Service {
 //            mHandler.sendMessage(msg);
 //            return;
 //        }
-        if (isConnected) {
-//            mHandler.removeMessages(BLE_STOP_SCAN);
-//            mHandler.sendEmptyMessageDelayed(BLE_STOP_SCAN, 10000);
-        }
     }
 
     /**
@@ -349,7 +341,6 @@ public class BluetoothService extends Service {
             mBluetoothGatt.disconnect();
 //            mBluetoothGatt.close();
 //            mBluetoothGatt = null;
-            isConnected = false;
         }
     }
 
@@ -432,7 +423,6 @@ public class BluetoothService extends Service {
                     if (mBluetoothGatt != null) {
                         mBluetoothGatt.close();
                     }
-                    isConnected = false;
                     mHandler.sendEmptyMessage(BLE_STATE_DISCONNECTED);
                     //如果需要重连在此重新扫描
 //                    mHandler.removeMessages(START_SCAN_BT);
@@ -444,6 +434,12 @@ public class BluetoothService extends Service {
                     super.onConnectionStateChange(gatt, status, newState);
                     break;
             }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            super.onMtuChanged(gatt, mtu, status);
+            LogUtil.d(TAG + " mtu =" + mtu + ", status=" + status);
         }
 
         @Override
@@ -471,7 +467,6 @@ public class BluetoothService extends Service {
                     if (mBluetoothGatt.writeDescriptor(descriptor)) {
                         LogUtil.d(TAG + "信息注册成功可以发送指令了");
                     }
-                    isConnected = true;
 //                    mHandler.sendEmptyMessage(BLE_STOP_SCAN);
                 }
 //                mHandler.removeMessages(START_SCAN_BT);
@@ -496,7 +491,7 @@ public class BluetoothService extends Service {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                LogUtil.d("BLE- write success :" + BlueDeviceUtils.binaryToHexString(characteristic.getValue()));
+                LogUtil.d("BLE- write success :" +  BlueDeviceUtils.binaryToHexString(characteristic.getValue()));
             } else {
                 LogUtil.d("BLE- read  fail status=" + status);
             }
@@ -513,43 +508,44 @@ public class BluetoothService extends Service {
         }
     };
 
-    private void writeCommandToBle() throws Exception {
+    private synchronized void writeCommandToBle() throws Exception {
         if (mBluetoothGatt == null) {
-            LogUtil.d(TAG + " writeCommandToBle mBluetoothGatt=null");
+            LogUtil.d(TAG + " writeCommandToBle mBluetoothGatt = null");
             return;
         }
         if (writeCommand.isEmpty()) {
             return;
         }
         if (dataCharacterstic == null) {
-            LogUtil.d(TAG + " writeCommandToBle dataCharacterstic=null");
+            LogUtil.d(TAG + " writeCommandToBle dataCharacterstic = null");
             return;
         }
         String command = writeCommand.remove(0).toUpperCase();
-        LogUtil.d(TAG + " obtain command=" + command);
+//        LogUtil.d(TAG + " obtain command=" + command);
         //////////////////
         byte[] encryption = BlueDeviceUtils.hexStringToBinary(command);
-//        byte[] encryption = BlueDeviceUtils.Encryption(bts1);
-        LogUtil.d(TAG + " length=" + encryption.length + " command binary=" + BlueDeviceUtils.binaryToHexString(encryption));
+        int total = encryption.length;
+        LogUtil.d(TAG + " length=" + total + " command binary=" + BlueDeviceUtils.binaryToHexString(encryption));
         int MAXLENGTH = 120;
-        if (encryption.length > MAXLENGTH) {
-            int count = encryption.length / MAXLENGTH;
-            int yu = encryption.length % MAXLENGTH;
+        if (total > MAXLENGTH) {
+            int count = total / MAXLENGTH;
+            int yu = total % MAXLENGTH;
             for (int i = 0; i < count; i++) {
                 byte[] range = Arrays.copyOfRange(encryption, MAXLENGTH * i, (i + 1) * MAXLENGTH);
                 try {
                     dataCharacterstic.setValue(range);
                     mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-                    Thread.sleep(90);
-                } catch (InterruptedException e) {
+                    TimeUnit.MILLISECONDS.sleep(200);
+                } catch (Exception e) {
                     e.printStackTrace();
+                    LogUtil.d(TAG + "第" + i + "轮异常：" + e.getStackTrace().toString());
                 }
                 LogUtil.d(TAG + "分割传送大于" + MAXLENGTH + "字节的数据 第" + i + "轮");
             }
-            byte[] range1 = Arrays.copyOfRange(encryption, encryption.length - yu, encryption.length);
+            byte[] range1 = Arrays.copyOfRange(encryption, total - yu, total);
             dataCharacterstic.setValue(range1);
             mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-            LogUtil.d(TAG + "写入大于" + MAXLENGTH + "字节的数据成功了");
+            LogUtil.d(TAG + "写入大于 " + total + " 字节的数据成功了");
         } else {
             dataCharacterstic.setValue(encryption);
             mBluetoothGatt.writeCharacteristic(dataCharacterstic);

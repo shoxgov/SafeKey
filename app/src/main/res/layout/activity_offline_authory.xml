@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@drawable/authory_settle_selector"
-            android:checked="true"
+
             android:text="密码"
             android:textColor="@color/textblack"
             android:textSize="@dimen/font_small" />
@@ -62,6 +62,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@drawable/authory_settle_selector"
+            android:checked="true"
             android:text="指纹"
             android:textColor="@color/textblack"
             android:textSize="@dimen/font_small" />
@@ -94,17 +95,18 @@
 
 
     <LinearLayout
+        android:id="@+id/offline_authory_search_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingBottom="5dip"
+        android:paddingTop="5dip">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
-            android:paddingTop="5dip"
             android:src="@mipmap/search_icon" />
 
         <EditText
@@ -116,10 +118,8 @@
             android:hint="输入学号/姓名查询"
             android:imeOptions="actionSearch"
             android:inputType="text"
-            android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
-            android:paddingTop="5dip"
             android:textSize="@dimen/font_normal" />
 
         <TextView
@@ -136,13 +136,15 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
     <LinearLayout
         android:id="@+id/offline_authory_pwd_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dip"
+        android:paddingTop="5dip"
+        android:visibility="gone">
 
         <TextView
             android:layout_width="wrap_content"
@@ -157,18 +159,15 @@
             android:layout_height="wrap_content"
             android:background="@null"
             android:hint="6位授权密码,只在密码类型有效"
-            android:paddingBottom="5dip"
-            android:paddingLeft="10dip"
             android:maxLength="6"
+            android:paddingLeft="10dip"
             android:paddingRight="10dip"
-            android:paddingTop="5dip"
             android:textSize="@dimen/font_normal" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
     <LinearLayout

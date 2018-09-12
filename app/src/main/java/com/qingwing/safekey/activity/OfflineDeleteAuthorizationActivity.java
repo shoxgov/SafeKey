@@ -4,11 +4,14 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -60,6 +63,8 @@ import butterknife.OnClick;
  */
 
 public class OfflineDeleteAuthorizationActivity extends BaseActivity implements Observer {
+    @Bind(R.id.search_user_layout)
+    LinearLayout searchUserLayout;
     @Bind(R.id.offline_del_settle_rg)
     RadioGroup settleRg;
     @Bind(R.id.offline_del_search_edit)
@@ -80,6 +85,18 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
     private HashMap<String, OrderResultBean> orderHashMap = new HashMap<>();
     private Vector<String> orderKeyVector = new Vector<>();
     private String runingOrderKey;
+
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 1:
+                    sendNextCommand("");
+                    break;
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,11 +136,31 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
             }
 
         });
+        settleRg.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup group, int checkedId) {
+                switch (checkedId) {
+                    case R.id.offline_del_settle_type_1:
+                        searchUserLayout.setVisibility(View.GONE);
+                        break;
+                    case R.id.offline_del_settle_type_2:
+                        searchUserLayout.setVisibility(View.VISIBLE);
+                        break;
+                    case R.id.offline_del_settle_type_3:
+                        searchUserLayout.setVisibility(View.GONE);
+                        break;
+                }
+            }
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mHandler != null) {
+            mHandler.removeMessages(1);
+        }
+        mHandler = null;
         ButterKnife.unbind(this);
         ObserverManager.getObserver().deleteObserver(this);
     }
@@ -239,28 +276,27 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
 //        List<CardOrderResult> cardOrderResult = new ArrayList<>();
         for (OrderResultBean orb : orderHashMap.values()) {
             switch (orb.getType()) {//0:密码； 1：指纹；2：卡片;
-                case 0:
-                    break;
                 case 1:
                     try {
                         JSONObject fjson = new JSONObject();
                         fjson.put("finorderresult", orb.getOrderresult());
                         fjson.put("rfids", orb.getIds());
                         fingerOrderResults.put(fjson);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 //                    FingerOrderResult fr = new FingerOrderResult();
 //                    fr.setFinorderresult(orb.getOrderresult());
 //                    fr.setRfids(orb.getIds());
                     break;
+                case 0:
                 case 2:
                     try {
                         JSONObject cjson = new JSONObject();
-                        cjson.put("finorderresult", orb.getOrderresult());
-                        cjson.put("rfids", orb.getIds());
+                        cjson.put("cardorderresult", orb.getOrderresult());
+                        cjson.put("rcids", orb.getIds());
                         cardOrderResult.put(cjson);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
 //                    CardOrderResult cr = new CardOrderResult();
@@ -314,63 +350,122 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
             case R.id.offline_del_authory_search_ok:
                 String key = searchEdit.getText().toString();
 //                if (!TextUtils.isEmpty(key)) {
-                    WaitTool.showDialog(this);
-                    rquestOfflineDelUser(key);
+                WaitTool.showDialog(this);
+                rquestOfflineDelUser(key);
 //                }
                 break;
 
             case R.id.offline_del_send:
+                switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
+                    case R.id.offline_del_settle_type_1:
+                        obtainPwdOrCardInfo("1");
+                        return;
+                    case R.id.offline_del_settle_type_3:
+                        obtainPwdOrCardInfo("3");
+                        return;
+                    case R.id.offline_del_settle_type_2:
+                        Map<String, String> params = new HashMap<String, String>();
+                        params.put("token", SKApplication.loginToken);
+                        params.put("roomid", roomid);
+                        List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> tempData = adapter.getData();
+                        if (tempData == null || tempData.isEmpty()) {
+                            ToastUtil.showText("请添加授权用户");
+                            return;
+                        }
+                        List<OfflineDelAuthoryRoomBack> roomback = new ArrayList<>();
+                        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo daui : tempData) {
+                            OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
+                            rb.setRoombacktype(daui.getSqtype());
+                            rb.setRoombackid(daui.getPersoncode());
+                            roomback.add(rb);
+                        }
+                        params.put("roomback", SerializationDefine.List2Str(roomback));
+                        OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY, params, OrderResponse.class, new HttpCallback() {
+                            @Override
+                            public void onSuccess(BaseResponse br) {
+                                super.onSuccess(br);
+                                OrderResponse or = (OrderResponse) br;
+                                if (or.getErrCode() == 0) {
+                                    List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
+                                    if (cardOrder != null && !cardOrder.isEmpty()) {
+                                        for (OrderResponse.CardOrder co : cardOrder) {
+                                            OrderResultBean orb = new OrderResultBean();
+                                            orb.setType(2);//0:密码；1：指纹； 2：卡片;
+                                            orb.setIds(co.getRcids());
+                                            orb.setOrder(co.getCardorder());
+                                            orderHashMap.put(2 + "#" + co.getRcids(), orb);
+                                        }
+                                    }
+                                    List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
+                                    if (fingerOrder != null && !fingerOrder.isEmpty()) {
+                                        for (OrderResponse.FingerOrder fo : fingerOrder) {
+                                            OrderResultBean orb = new OrderResultBean();
+                                            orb.setType(1);//0:密码；1：指纹； 2：卡片;
+                                            orb.setIds(fo.getRfids());
+                                            orb.setOrder(fo.getFinorder());
+                                            orderHashMap.put(1 + "#" + fo.getRfids(), orb);
+                                        }
+                                    }
+                                    if (!orderHashMap.isEmpty()) {
+                                        WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
+                                        sendOrderToBt();
+                                    } else {
+                                        WaitTool.dismissDialog();
+                                        ToastUtil.showText("该用户没有指令数据");
+                                    }
+                                } else {
+                                    ToastUtil.showText(br.getErrMsg());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(int code, String message) {
+                                super.onFailure(code, message);
+                                ToastUtil.showText(message);
+                            }
+                        });
+
+                }
+                break;
+        }
+    }
+
+    private void obtainPwdOrCardInfo(final String type) {
+        String info = "确定删除密码授权？";
+        if (type.equals("3")) {
+            info = "确定删除卡片授权？";
+        }
+        AffirmDialog warnDialog = new AffirmDialog(OfflineDeleteAuthorizationActivity.this, info, new DialogCallBack() {
+            @Override
+            public void OkDown(Object obj) {
+                WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("token", SKApplication.loginToken);
                 params.put("roomid", roomid);
-                List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> tempData = adapter.getData();
-                if (tempData == null || tempData.isEmpty()) {
-                    ToastUtil.showText("请添加授权用户");
-                    return;
-                }
-                List<OfflineDelAuthoryRoomBack> roomback = new ArrayList<>();
-                for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo daui : tempData) {
-                    OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
-                    rb.setRoombacktype(daui.getSqtype());
-                    rb.setRoombackid(daui.getPersoncode());
-                    roomback.add(rb);
-                }
-                params.put("roomback", SerializationDefine.List2Str(roomback));
-                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY, params, OrderResponse.class, new HttpCallback() {
+                params.put("sqtype", type);
+                params.put("search", "");
+                params.put("rows", "" + pageSize);
+                params.put("page", "1");
+                OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY_USERINFO, params, OfflineDelAuthoryUserInfoResponse.class, new HttpCallback() {
                     @Override
                     public void onSuccess(BaseResponse br) {
                         super.onSuccess(br);
-                        OrderResponse or = (OrderResponse) br;
-                        if (or.getErrCode() == 0) {
-                            List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
-                            if (cardOrder != null && !cardOrder.isEmpty()) {
-                                for (OrderResponse.CardOrder co : cardOrder) {
-                                    OrderResultBean orb = new OrderResultBean();
-                                    orb.setType(2);//0:密码；1：指纹； 2：卡片;
-                                    orb.setIds(co.getRcids());
-                                    orb.setOrder(co.getCardorder());
-                                    orderHashMap.put(2 + "#" + co.getRcids(), orb);
-                                }
-                            }
-                            List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
-                            if (fingerOrder != null && !fingerOrder.isEmpty()) {
-                                for (OrderResponse.FingerOrder fo : fingerOrder) {
-                                    OrderResultBean orb = new OrderResultBean();
-                                    orb.setType(1);//0:密码；1：指纹； 2：卡片;
-                                    orb.setIds(fo.getRfids());
-                                    orb.setOrder(fo.getFinorder());
-                                    orderHashMap.put(1 + "#" + fo.getFinorder(), orb);
-                                }
-                            }
-                            if (!orderHashMap.isEmpty()) {
-                                WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
-                                sendOrderToBt();
-                            } else {
+                        OfflineDelAuthoryUserInfoResponse odi = (OfflineDelAuthoryUserInfoResponse) br;
+                        if (odi.getErrCode() == 0) {
+                            List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> temp = odi.getRoomcard();
+                            if (temp == null || temp.isEmpty()) {
+                                ToastUtil.showText("没有门锁信息");
                                 WaitTool.dismissDialog();
-                                ToastUtil.showText("该用户没有指令数据");
+                                return;
                             }
+//                            if (temp.size() == 1) {
+//                                sendDelPwdModel(temp);
+//                            } else {
+                            multiChoiceItem(temp);
+//                            }
                         } else {
-                            ToastUtil.showText(br.getErrMsg());
+                            ToastUtil.showText(odi.getErrMsg());
+                            WaitTool.dismissDialog();
                         }
                     }
 
@@ -378,10 +473,118 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
                     public void onFailure(int code, String message) {
                         super.onFailure(code, message);
                         ToastUtil.showText(message);
+                        WaitTool.dismissDialog();
                     }
                 });
-                break;
+            }
+
+            @Override
+            public void CancleDown() {
+
+            }
+        });
+        warnDialog.show();
+    }
+
+
+    private String selectItems = "";
+
+    private void multiChoiceItem(final List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> data) {
+        selectItems = "";
+        List<String> itemData = new ArrayList<>();
+        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo di : data) {
+            itemData.add("密码:" + di.getSqcode() + "\n" + "时间:" + di.getSqdate().replace(".0", ""));
         }
+        AlertDialog dialog = new AlertDialog.Builder(OfflineDeleteAuthorizationActivity.this).setTitle("请选择要删除的密码").setIcon(R.mipmap.ic_launcher)
+                .setNegativeButton("取消", null).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        LogUtil.d("selectItems=" + selectItems);
+                        if (TextUtils.isEmpty(selectItems)) {
+                            WaitTool.dismissDialog();
+                            return;
+                        }
+                        List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> newData = new ArrayList<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo>();
+                        int i = 0;
+                        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo di : data) {
+                            if (selectItems.contains("#" + i + "&")) {
+                                newData.add(di);
+                            }
+                            i++;
+                        }
+                        sendDelPwdModel(newData);
+                    }
+                })
+                .setMultiChoiceItems(itemData.toArray(new String[itemData.size()]), null, new DialogInterface.OnMultiChoiceClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                        if (isChecked) {
+                            selectItems += "#" + which + "&";
+                        } else {
+                            selectItems = selectItems.replace("#" + which + "&", "");
+                        }
+                    }
+                }).create();
+        dialog.show();
+    }
+
+    private void sendDelPwdModel(List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> tempData) {
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("token", SKApplication.loginToken);
+        params.put("roomid", roomid);
+        List<OfflineDelAuthoryRoomBack> roomback = new ArrayList<>();
+        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo daui : tempData) {
+            OfflineDelAuthoryRoomBack rb = new OfflineDelAuthoryRoomBack();
+            rb.setRoombacktype(daui.getSqtype());
+            rb.setRoombackid(daui.getSqid());
+            roomback.add(rb);
+        }
+        params.put("roomback", SerializationDefine.List2Str(roomback));
+        OkHttpUtils.postAsyn(NetWorkConfig.OFFLINE_DEL_AUTHORY, params, OrderResponse.class, new HttpCallback() {
+            @Override
+            public void onSuccess(BaseResponse br) {
+                super.onSuccess(br);
+                OrderResponse or = (OrderResponse) br;
+                if (or.getErrCode() == 0) {
+                    List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
+                    if (cardOrder != null && !cardOrder.isEmpty()) {
+                        for (OrderResponse.CardOrder co : cardOrder) {
+                            OrderResultBean orb = new OrderResultBean();
+                            orb.setType(2);//0:密码；1：指纹； 2：卡片;
+                            orb.setIds(co.getRcids());
+                            orb.setOrder(co.getCardorder());
+                            orderHashMap.put(2 + "#" + co.getRcids(), orb);
+                        }
+                    }
+                    List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
+                    if (fingerOrder != null && !fingerOrder.isEmpty()) {
+                        for (OrderResponse.FingerOrder fo : fingerOrder) {
+                            OrderResultBean orb = new OrderResultBean();
+                            orb.setType(1);//0:密码；1：指纹； 2：卡片;
+                            orb.setIds(fo.getRfids());
+                            orb.setOrder(fo.getFinorder());
+                            orderHashMap.put(1 + "#" + fo.getRfids(), orb);
+                        }
+                    }
+                    if (!orderHashMap.isEmpty()) {
+                        WaitTool.showDialog(OfflineDeleteAuthorizationActivity.this);
+                        sendOrderToBt();
+                    } else {
+                        WaitTool.dismissDialog();
+                        ToastUtil.showText("该用户没有指令数据");
+                    }
+                } else {
+                    ToastUtil.showText(br.getErrMsg());
+                }
+            }
+
+            @Override
+            public void onFailure(int code, String message) {
+                super.onFailure(code, message);
+                ToastUtil.showText(message);
+            }
+        });
     }
 
     private void sendOrderToBt() {
@@ -389,14 +592,18 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         for (String s : orderKeySet) {
             orderKeyVector.add(s);
         }
+        LogUtil.d("orderHashMap: " + orderKeySet.toString());
         runingOrderKey = orderKeyVector.remove(0);
         sendOrderCommand(runingOrderKey);
     }
 
     private void sendOrderCommand(String key) {
+        String command = orderHashMap.get(key).getOrder();
         Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, orderHashMap.get(key).getOrder());
+        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, command);
         sendBroadcast(intent);
+
+        mHandler.sendEmptyMessageDelayed(1, (command.length() / 120) * 800 + 6000);
     }
 
     @Override
@@ -404,19 +611,24 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         ObservableBean ob = (ObservableBean) obj;
         switch (ob.getWhat()) {
             case BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT:
-                LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
-                //创建旋转动画
-                OrderResultBean order = orderHashMap.get(runingOrderKey);
-                order.setOrderresult(ob.getObject().toString());
-                orderHashMap.remove(runingOrderKey);
-                orderHashMap.put(runingOrderKey, order);
-                if (orderKeyVector.isEmpty()) {
-                    submitOfflineDelAuthorResult();
-                } else {
-                    runingOrderKey = orderKeyVector.remove(0);
-                    sendOrderCommand(runingOrderKey);
-                }
+                mHandler.removeMessages(1);
+                sendNextCommand(ob.getObject().toString());
                 break;
+        }
+    }
+
+    private void sendNextCommand(String result) {
+        LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
+        //创建旋转动画
+        OrderResultBean order = orderHashMap.get(runingOrderKey);
+        order.setOrderresult(result);
+        orderHashMap.remove(runingOrderKey);
+        orderHashMap.put(runingOrderKey, order);
+        if (orderKeyVector.isEmpty()) {
+            submitOfflineDelAuthorResult();
+        } else {
+            runingOrderKey = orderKeyVector.remove(0);
+            sendOrderCommand(runingOrderKey);
         }
     }
 

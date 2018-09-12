@@ -4,6 +4,8 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.view.KeyEvent;
 import android.view.View;
@@ -73,6 +75,8 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
     EditText searchEdit;
     @Bind(R.id.offline_authory_search_ok)
     TextView searchBtn;
+    @Bind(R.id.offline_authory_search_layout)
+    LinearLayout searchUserLayout;
     @Bind(R.id.offline_authory_pwd_layout)
     LinearLayout pwdLayout;
     @Bind(R.id.offline_authory_start_time)
@@ -94,6 +98,18 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
     private Vector<String> orderKeyVector = new Vector<>();
     private String runingOrderKey;
 
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case 1:
+                    sendNextCommand("");
+                    break;
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,6 +123,10 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mHandler != null) {
+            mHandler.removeMessages(1);
+        }
+        mHandler = null;
         ObserverManager.getObserver().deleteObserver(this);
         ButterKnife.unbind(this);
     }
@@ -136,7 +156,7 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
             }
 
         });
-//        settleRg.setOnCheckedChangeListener(onCheckedChangeListener);
+        settleRg.setOnCheckedChangeListener(onCheckedChangeListener);
     }
 
     RadioGroup.OnCheckedChangeListener onCheckedChangeListener = new RadioGroup.OnCheckedChangeListener() {
@@ -149,13 +169,16 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
             }
             switch (checkedId) {
                 case R.id.offline_authory_settle_type_1:
-
+                    searchUserLayout.setVisibility(View.GONE);
+                    pwdLayout.setVisibility(View.VISIBLE);
                     break;
                 case R.id.offline_authory_settle_type_2:
-
+                    searchUserLayout.setVisibility(View.VISIBLE);
+                    pwdLayout.setVisibility(View.GONE);
                     break;
                 case R.id.offline_authory_settle_type_3:
-
+                    searchUserLayout.setVisibility(View.VISIBLE);
+                    pwdLayout.setVisibility(View.GONE);
                     break;
             }
         }
@@ -234,116 +257,141 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                 });
                 break;
             case R.id.offline_authory_send:
-                String startTime = startTimeTv.getText().toString();
-                String endTime = endTimeTv.getText().toString();
-                String count = countEdit.getText().toString();
-                if (TextUtils.isEmpty(startTime)) {
-                    ToastUtil.showText("请输入开始时间");
-                    return;
-                }
-                if (TextUtils.isEmpty(endTime)) {
-                    ToastUtil.showText("请输入结束时间");
-                    return;
-                }
-                Map<String, String> params2 = new HashMap<String, String>();
-                params2.put("token", SKApplication.loginToken);
-                params2.put("roomid", roomid);
-                if (settleRg.getCheckedRadioButtonId() == R.id.offline_authory_settle_type_1) {
-                    List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
-                    OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
-                    oui.setRoomcardtype(1);
-                    String pwd = pwdEdit.getText().toString();
-                    if (TextUtils.isEmpty(pwd)) {
-                        ToastUtil.showText("请输入授权密码");
-                        return;
-                    }
-                    if (pwd.length() != 6) {
-                        ToastUtil.showText("请输入6位授权密码");
-                        return;
-                    }
-                    oui.setPersoncode("");
-                    oui.setSdate(startTime);
-                    oui.setEdate(endTime);
-                    oui.setPassword(pwd);
-                    roomcard.add(oui);
-                    params2.put("roomcard", SerializationDefine.List2Str(roomcard));
-                } else {
-                    List<OfflineAuthoryUserInfoResponse.AuthoryUserInfo> tempData = adapter.getData();
-                    if (tempData == null || tempData.isEmpty()) {
-                        ToastUtil.showText("请添加授权用户");
-                        return;
-                    }
-                    List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
-                    for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : tempData) {
-                        OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
-                        oui.setSdate(startTime);
-                        oui.setEdate(endTime);
-                        oui.setRccount(count);
-                        switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
-                            case R.id.offline_authory_settle_type_2:
-                                oui.setRoomcardtype(aui.getRoomcardtype());
-                                oui.setPassword("");
-                                oui.setPersoncode(aui.getPersoncode());
-                                break;
-                            case R.id.offline_authory_settle_type_3:
-                                oui.setRoomcardtype(aui.getRoomcardtype());
-                                oui.setPassword("");
-                                oui.setPersoncode(aui.getPersoncode());
-                                break;
-                        }
-                        roomcard.add(oui);
-                    }
-                    params2.put("roomcard", SerializationDefine.List2Str(roomcard));
-                }
-                WaitTool.showDialog(this);
-                OkHttpUtils.postAsyn(NetWorkConfig.OBTAIN_OFFLINE_AUTHORY_SAVE, params2, OrderResponse.class, new HttpCallback() {
-                    @Override
-                    public void onSuccess(BaseResponse br) {
-                        super.onSuccess(br);
-                        OrderResponse or = (OrderResponse) br;
-                        if (or.getErrCode() == 0) {
-                            List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
-                            if (cardOrder != null && !cardOrder.isEmpty()) {
-                                for (OrderResponse.CardOrder co : cardOrder) {
-                                    OrderResultBean orb = new OrderResultBean();
-                                    orb.setType(2);//0:密码；1：指纹； 2：卡片;
-                                    orb.setIds(co.getRcids());
-                                    orb.setOrder(co.getCardorder());
-                                    orderHashMap.put(2 + "#" + co.getRcids(), orb);
-                                }
+                switch (settleRg.getCheckedRadioButtonId()){
+                    case R.id.offline_authory_settle_type_1:
+                        AffirmDialog warnDialog = new AffirmDialog(OfflineAuthorizationActivity.this, "确定添加密码授权？", new DialogCallBack() {
+                            @Override
+                            public void OkDown(Object obj) {
+                                sendAuthory();
                             }
-                            List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
-                            if (fingerOrder != null && !fingerOrder.isEmpty()) {
-                                for (OrderResponse.FingerOrder fo : fingerOrder) {
-                                    OrderResultBean orb = new OrderResultBean();
-                                    orb.setType(1);//0:密码；1：指纹； 2：卡片;
-                                    orb.setIds(fo.getRfids());
-                                    orb.setOrder(fo.getFinorder());
-                                    orderHashMap.put(1 + "#" + fo.getFinorder(), orb);
-                                }
-                            }
-                            if (!orderHashMap.isEmpty()) {
-                                WaitTool.showDialog(OfflineAuthorizationActivity.this);
-                                sendOrderToBt();
-                            } else {
-                                WaitTool.dismissDialog();
-                                ToastUtil.showText("该用户没有指令数据");
-                            }
-                        } else {
-                            WaitTool.dismissDialog();
-                            ToastUtil.showText(or.getErrMsg());
-                        }
-                    }
 
+                            @Override
+                            public void CancleDown() {
 
-                    @Override
-                    public void onFailure(int code, String message) {
-                        super.onFailure(code, message);
-                        ToastUtil.showText(message);
-                    }
-                });
+                            }
+                        });
+                        warnDialog.show();
+                        break;
+                    case R.id.offline_authory_settle_type_2:
+                        sendAuthory();
+                        break;
+                    case R.id.offline_authory_settle_type_3:
+                        sendAuthory();
+                        break;
+                }
                 break;
         }
+    }
+
+    private void sendAuthory() {
+        String startTime = startTimeTv.getText().toString();
+        String endTime = endTimeTv.getText().toString();
+        String count = countEdit.getText().toString();
+        if (TextUtils.isEmpty(startTime)) {
+            ToastUtil.showText("请输入开始时间");
+            return;
+        }
+        if (TextUtils.isEmpty(endTime)) {
+            ToastUtil.showText("请输入结束时间");
+            return;
+        }
+        Map<String, String> params2 = new HashMap<String, String>();
+        params2.put("token", SKApplication.loginToken);
+        params2.put("roomid", roomid);
+        if (settleRg.getCheckedRadioButtonId() == R.id.offline_authory_settle_type_1) {
+            List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
+            OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
+            oui.setRoomcardtype(1);
+            String pwd = pwdEdit.getText().toString();
+            if (TextUtils.isEmpty(pwd)) {
+                ToastUtil.showText("请输入授权密码");
+                return;
+            }
+            if (pwd.length() != 6) {
+                ToastUtil.showText("请输入6位授权密码");
+                return;
+            }
+            oui.setPersoncode("");
+            oui.setSdate(startTime);
+            oui.setEdate(endTime);
+            oui.setPassword(pwd);
+            roomcard.add(oui);
+            params2.put("roomcard", SerializationDefine.List2Str(roomcard));
+        } else {
+            List<OfflineAuthoryUserInfoResponse.AuthoryUserInfo> tempData = adapter.getData();
+            if (tempData == null || tempData.isEmpty()) {
+                ToastUtil.showText("请添加授权用户");
+                return;
+            }
+            List<OfflineAuthoryUserInfo> roomcard = new ArrayList<>();
+            for (OfflineAuthoryUserInfoResponse.AuthoryUserInfo aui : tempData) {
+                OfflineAuthoryUserInfo oui = new OfflineAuthoryUserInfo();
+                oui.setSdate(startTime);
+                oui.setEdate(endTime);
+                oui.setRccount(count);
+                switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
+                    case R.id.offline_authory_settle_type_2:
+                        oui.setRoomcardtype(aui.getRoomcardtype());
+                        oui.setPassword("");
+                        oui.setPersoncode(aui.getPersoncode());
+                        break;
+                    case R.id.offline_authory_settle_type_3:
+                        oui.setRoomcardtype(aui.getRoomcardtype());
+                        oui.setPassword("");
+                        oui.setPersoncode(aui.getPersoncode());
+                        break;
+                }
+                roomcard.add(oui);
+            }
+            params2.put("roomcard", SerializationDefine.List2Str(roomcard));
+        }
+        WaitTool.showDialog(this);
+        OkHttpUtils.postAsyn(NetWorkConfig.OBTAIN_OFFLINE_AUTHORY_SAVE, params2, OrderResponse.class, new HttpCallback() {
+            @Override
+            public void onSuccess(BaseResponse br) {
+                super.onSuccess(br);
+                OrderResponse or = (OrderResponse) br;
+                if (or.getErrCode() == 0) {
+                    List<OrderResponse.CardOrder> cardOrder = or.getOrder().getCard();
+                    if (cardOrder != null && !cardOrder.isEmpty()) {
+                        for (OrderResponse.CardOrder co : cardOrder) {
+                            OrderResultBean orb = new OrderResultBean();
+                            orb.setType(2);//0:密码；1：指纹； 2：卡片;
+                            orb.setIds(co.getRcids());
+                            orb.setOrder(co.getCardorder());
+                            orderHashMap.put(2 + "#" + co.getRcids(), orb);
+                        }
+                    }
+                    List<OrderResponse.FingerOrder> fingerOrder = or.getOrder().getFinger();
+                    if (fingerOrder != null && !fingerOrder.isEmpty()) {
+                        for (OrderResponse.FingerOrder fo : fingerOrder) {
+                            OrderResultBean orb = new OrderResultBean();
+                            orb.setType(1);//0:密码；1：指纹； 2：卡片;
+                            orb.setIds(fo.getRfids());
+                            orb.setOrder(fo.getFinorder());
+                            orderHashMap.put(1 + "#" + fo.getRfids(), orb);
+                        }
+                    }
+                    if (!orderHashMap.isEmpty()) {
+                        WaitTool.showDialog(OfflineAuthorizationActivity.this);
+                        sendOrderToBt();
+                    } else {
+                        WaitTool.dismissDialog();
+                        ToastUtil.showText("该用户没有指令数据");
+                    }
+                } else {
+                    WaitTool.dismissDialog();
+                    ToastUtil.showText(or.getErrMsg());
+                }
+            }
+
+
+            @Override
+            public void onFailure(int code, String message) {
+                super.onFailure(code, message);
+                ToastUtil.showText(message);
+            }
+        });
     }
 
     private void sendOrderToBt() {
@@ -351,14 +399,17 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         for (String s : orderKeySet) {
             orderKeyVector.add(s);
         }
+        LogUtil.d("orderHashMap: " + orderKeySet.toString());
         runingOrderKey = orderKeyVector.remove(0);
         sendOrderCommand(runingOrderKey);
     }
 
     private void sendOrderCommand(String key) {
+        String command = orderHashMap.get(key).getOrder();
         Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
-        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, orderHashMap.get(key).getOrder());
+        intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, command);
         sendBroadcast(intent);
+        mHandler.sendEmptyMessageDelayed(1, (command.length() / 120) * 800 + 6000);
     }
 
     @Override
@@ -367,19 +418,24 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         switch (ob.getWhat()) {
 //            case BleObserverConstance.LOCK_OFFLINE_AUTHORY_COMMAND_RESULT:
             case BleObserverConstance.LOCK_OFFLINE_DEL_AUTHORY_COMMAND_RESULT:
-                LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
-                //创建旋转动画
-                OrderResultBean order = orderHashMap.get(runingOrderKey);
-                order.setOrderresult(ob.getObject().toString());
-                orderHashMap.remove(runingOrderKey);
-                orderHashMap.put(runingOrderKey, order);
-                if (orderKeyVector.isEmpty()) {
-                    submitOfflineCommand();
-                } else {
-                    runingOrderKey = orderKeyVector.remove(0);
-                    sendOrderCommand(runingOrderKey);
-                }
+                mHandler.removeMessages(1);
+                sendNextCommand(ob.getObject().toString());
                 break;
+        }
+    }
+
+    private void sendNextCommand(String result) {
+        LogUtil.d("  LOCK_OFFLINE_AUTHORY_COMMAND_RESULT  ");
+        //创建旋转动画
+        OrderResultBean order = orderHashMap.get(runingOrderKey);
+        order.setOrderresult(result);
+        orderHashMap.remove(runingOrderKey);
+        orderHashMap.put(runingOrderKey, order);
+        if (orderKeyVector.isEmpty()) {
+            submitOfflineCommand();
+        } else {
+            runingOrderKey = orderKeyVector.remove(0);
+            sendOrderCommand(runingOrderKey);
         }
     }
 
@@ -470,8 +526,6 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
         for (OrderResultBean orb : orderHashMap.values()) {
 
             switch (orb.getType()) {//0:密码； 1：指纹；2：卡片;
-                case 0:
-                    break;
                 case 1:
                     try {
                         JSONObject fjson = new JSONObject();
@@ -486,11 +540,13 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
 //                    fr.setRfids(orb.getIds());
 //                    fingerOrderResults.add(fr);
                     break;
+                case 0:
+//                    break;
                 case 2:
                     try {
                         JSONObject cjson = new JSONObject();
-                        cjson.put("finorderresult", orb.getOrderresult());
-                        cjson.put("rfids", orb.getIds());
+                        cjson.put("cardorderresult", orb.getOrderresult());
+                        cjson.put("rcids", orb.getIds());
                         cardOrderResult.put(cjson);
                     } catch (Exception e) {
                         e.printStackTrace();

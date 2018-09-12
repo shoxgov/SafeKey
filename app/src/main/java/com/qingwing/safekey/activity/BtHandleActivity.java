@@ -20,7 +20,9 @@ import com.qingwing.safekey.bean.LockStatusEmue;
 import com.qingwing.safekey.bluetooth.BLECommandManager;
 import com.qingwing.safekey.bluetooth.BleObserverConstance;
 import com.qingwing.safekey.bluetooth.BluetoothService;
+import com.qingwing.safekey.dialog.AffirmDialog;
 import com.qingwing.safekey.dialog.WaitTool;
+import com.qingwing.safekey.imp.DialogCallBack;
 import com.qingwing.safekey.observable.ObservableBean;
 import com.qingwing.safekey.observable.ObserverManager;
 import com.qingwing.safekey.okhttp3.http.HttpCallback;
@@ -143,6 +145,22 @@ public class BtHandleActivity extends BaseActivity implements Observer {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
+            AffirmDialog warnDialog = new AffirmDialog(BtHandleActivity.this, "确定强制断开连接？", new DialogCallBack() {
+                @Override
+                public void OkDown(Object obj) {
+                    Intent disconnect = new Intent();
+                    disconnect.setAction(BluetoothService.ACTION_BT_COMMAND);
+                    disconnect.putExtra("command", "DISCONNECT_BT");
+                    sendBroadcast(disconnect);
+                    finish();
+                }
+
+                @Override
+                public void CancleDown() {
+
+                }
+            });
+            warnDialog.show();
             return true;
         }
         return super.onKeyDown(keyCode, event);

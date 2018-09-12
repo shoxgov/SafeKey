@@ -261,6 +261,7 @@ public class LoginActivity extends BaseActivity {
 //                mPsw.setVisibility(View.INVISIBLE);
 //                inputAnimator(mInputLayout, mWidth, mHeight);
                 login(username, pwd);
+//                login("admin", "qingyixinxi");
                 break;
         }
     }

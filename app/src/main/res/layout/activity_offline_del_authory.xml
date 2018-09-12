@@ -47,7 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@drawable/authory_settle_selector"
-            android:checked="true"
+
             android:drawablePadding="10dip"
             android:text="密码"
             android:textColor="@color/textblack"
@@ -63,6 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@drawable/authory_settle_selector"
+            android:checked="true"
             android:drawablePadding="10dip"
             android:text="指纹"
             android:textColor="@color/textblack"
@@ -97,17 +98,18 @@
 
 
     <LinearLayout
+        android:id="@+id/search_user_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:paddingBottom="5dip"
+        android:paddingTop="5dip">
 
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingBottom="5dip"
             android:paddingLeft="10dip"
             android:paddingRight="10dip"
-            android:paddingTop="5dip"
             android:src="@mipmap/search_icon" />
 
 
@@ -141,7 +143,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
     <EditText
@@ -149,13 +150,13 @@
         android:layout_height="wrap_content"
         android:background="@null"
         android:enabled="false"
+        android:visibility="gone"
         android:lines="5" />
 
 
     <View
         android:layout_width="match_parent"
         android:layout_height="10dp"
-        android:layout_marginTop="5dip"
         android:background="@color/line_color" />
 
     <!-- <EditText

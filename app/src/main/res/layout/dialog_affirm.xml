@@ -13,7 +13,8 @@
         android:gravity="center"
         android:lineSpacingMultiplier="1.2"
         android:paddingBottom="5dip"
-        android:paddingTop="10dip" />
+        android:paddingTop="10dip"
+        android:textSize="@dimen/font_normal" />
 
 
     <LinearLayout

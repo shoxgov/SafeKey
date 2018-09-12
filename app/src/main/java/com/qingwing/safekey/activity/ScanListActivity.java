@@ -101,6 +101,8 @@ public class ScanListActivity extends BaseActivity implements Observer {
 
     private int gocount = 0;
 
+    private boolean isFront = true;
+
     private Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -111,6 +113,10 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     break;
                 case 1:
                     freshToken();
+                    break;
+                case 2:
+                    WaitTool.dismissDialog();
+                    ToastUtil.showText("连接失败，请重试");
                     break;
             }
         }
@@ -123,12 +129,15 @@ public class ScanListActivity extends BaseActivity implements Observer {
             case BleObserverConstance.BOX_CONNTEC_BLE_STATUS:
                 if ((boolean) ob.getObject()) {
                 } else {
-                    ToastUtil.showText("连接失败,请重试");
-                    WaitTool.dismissDialog();
+                    if (isFront) {
+                        ToastUtil.showText("连接失败,请重试");
+                        WaitTool.dismissDialog();
+                    }
                 }
                 break;
             case BleObserverConstance.ACTION_GATT_CONNECT_SUCCESS:
 //            case BleObserverConstance.BOX_CONNTECING_BLE:
+                mHandler.removeMessages(2);
                 LogUtil.d("  BOX_CONNTECING_BLE  ");
                 //创建旋转动画
                 WaitTool.dismissDialog();
@@ -207,6 +216,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
     @Override
     protected void onResume() {
         super.onResume();
+        isFront = true;
 //        if(bluetoothService != null){
 //            bluetoothService.startBLEscan();
 //        }
@@ -214,6 +224,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
 
     @Override
     protected void onPause() {
+        isFront = false;
         super.onPause();
     }
 
@@ -266,6 +277,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                     ToastUtil.showText("请选择设备");
                     return;
                 }
+//                mHandler.removeMessages(2);
                 Intent history = new Intent();
                 history.setClass(ScanListActivity.this, HandleHistoryActivity.class);
                 history.putExtra("selectHouseId", selectHouseId);
@@ -429,6 +441,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                                 WaitTool.showDialog(ScanListActivity.this, "正在连接...");
                                 if (bluetoothService != null) {
                                     bluetoothService.connectByAddress(bdi.getBtAddress());
+                                    mHandler.sendEmptyMessageDelayed(2, 6000);
                                 }
                             }
 

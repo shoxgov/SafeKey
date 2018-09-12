@@ -3,19 +3,16 @@ package com.qingwing.safekey.view;
 import android.content.Context;
 import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.qingwing.safekey.NetWorkConfig;
 import com.qingwing.safekey.R;
 import com.qingwing.safekey.SKApplication;
+import com.qingwing.safekey.dialog.ListViewDialog;
 import com.qingwing.safekey.imp.HouseFloorListener;
 import com.qingwing.safekey.okhttp3.http.HttpCallback;
 import com.qingwing.safekey.okhttp3.http.OkHttpUtils;
@@ -34,7 +31,7 @@ import java.util.Map;
 public class HouseFloorFilter extends RelativeLayout implements View.OnClickListener {
 
     private Context mContext;
-    private SpinerPopWindow housePop, floorPop, modelPop;
+    private ListViewDialog housePop, floorPop, modelPop;
     private HouseFloorListener listener = null;
     private TextView houseTv, floorTv, modelTv;
     private LinearLayout houseLayout, floorLayout, modelLayout;
@@ -81,9 +78,9 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
         houseLayout = (LinearLayout) findViewById(R.id.filter_house_layout);
         floorLayout = (LinearLayout) findViewById(R.id.filter_floor_layout);
         modelLayout = (LinearLayout) findViewById(R.id.filter_model_layout);
-        houseTv.setOnClickListener(this);
-        floorTv.setOnClickListener(this);
-        modelTv.setOnClickListener(this);
+        houseLayout.setOnClickListener(this);
+        floorLayout.setOnClickListener(this);
+        modelLayout.setOnClickListener(this);
         findViewById(R.id.filter_ok).setOnClickListener(this);
         ///////////////
         //////////////
@@ -96,19 +93,20 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
         for (HouseInfoResponse.HouseInfo hi : houseDate) {
             houselist.add(hi.getAgname());
         }
-        housePop = new SpinerPopWindow<String>(mContext, houselist, houseItemClickListener);
-        housePop.setOnDismissListener(dismissListener);
+        housePop = new ListViewDialog(mContext, "请选择楼栋", houseItemClickListener);
+        housePop.setData(houselist);
+//        housePop.setOnDismissListener(dismissListener);
     }
 
     /**
      * 监听popupwindow取消
      */
-    private PopupWindow.OnDismissListener dismissListener = new PopupWindow.OnDismissListener() {
-        @Override
-        public void onDismiss() {
-            //setTextImage(R.drawable.icon_down);
-        }
-    };
+//    private PopupWindow.OnDismissListener dismissListener = new PopupWindow.OnDismissListener() {
+//        @Override
+//        public void onDismiss() {
+//            //setTextImage(R.drawable.icon_down);
+//        }
+//    };
 
     /**
      * popupwindow显示的ListView的item点击事件
@@ -156,14 +154,12 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
         }
         if (floorlist.isEmpty()) {
             ToastUtil.showText("该楼栋没有楼层");
-            return;
         }
-        if (floorPop != null) {
-            floorPop.dismiss();
-            floorPop = null;
+        if (floorPop == null) {
+            floorPop = new ListViewDialog(mContext, "请选择楼层", floorItemClickListener);
         }
-        floorPop = new SpinerPopWindow<String>(mContext, floorlist, floorItemClickListener);
-        floorPop.setOnDismissListener(dismissListener);
+        floorPop.setData(floorlist);
+//        floorPop.setOnDismissListener(dismissListener);
     }
 
     private void initModelPop() {
@@ -171,8 +167,9 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
         for (ModelInfoResponse.DevoceInfo di : modelDate) {
             modellist.add(di.getDevicename());
         }
-        modelPop = new SpinerPopWindow<String>(mContext, modellist, deviceItemClickListener);
-        modelPop.setOnDismissListener(dismissListener);
+        modelPop = new ListViewDialog(mContext, "请选择类型", deviceItemClickListener);
+        modelPop.setData(modellist);
+//        modelPop.setOnDismissListener(dismissListener);
     }
 
     @Override
@@ -181,49 +178,24 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
             return;
         }
         switch (view.getId()) {
-            case R.id.filter_house:
+            case R.id.filter_house_layout:
                 if (housePop == null) {
                     return;
                 }
-//                if (floorPop != null) {
-//                    floorPop.dismiss();
-//                }
-//                if (modelPop != null) {
-//                    modelPop.dismiss();
-//                }
-                housePop.setWidth(houseLayout.getWidth());
-                housePop.showUp(houseLayout);
+                housePop.show();
                 break;
-            case R.id.filter_floor:
+            case R.id.filter_floor_layout:
                 if (floorPop == null) {
                     ToastUtil.showText("请选择楼栋");
                     return;
                 }
-//                if (housePop != null) {
-//                    housePop.dismiss();
-//                }
-//                if (modelPop != null) {
-//                    modelPop.dismiss();
-//                }
-                int[] flocation = new int[2];
-                floorLayout.getLocationOnScreen(flocation);
-                //在控件上方显示
-                floorPop.setWidth(floorLayout.getWidth());
-                floorPop.showAtLocation(floorLayout, Gravity.NO_GRAVITY, flocation[0], flocation[1]);
-
+                floorPop.show();
                 break;
-            case R.id.filter_model:
+            case R.id.filter_model_layout:
                 if (modelPop == null) {
                     return;
                 }
-//                if (floorPop != null) {
-//                    floorPop.dismiss();
-//                }
-//                if (housePop != null ) {
-//                    housePop.dismiss();
-//                }
-                modelPop.setWidth(modelLayout.getWidth());
-                modelPop.showUp(modelLayout);
+                modelPop.show();
                 break;
             case R.id.filter_ok:
                 if (TextUtils.isEmpty(houseSelectid)) {
@@ -292,6 +264,7 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
                     initFloorPop();
                 } else {
                     ToastUtil.showText(hr.getErrMsg());
+                    initFloorPop();
                 }
             }
 
@@ -299,6 +272,7 @@ public class HouseFloorFilter extends RelativeLayout implements View.OnClickList
             public void onFailure(int code, String message) {
                 super.onFailure(code, message);
                 ToastUtil.showText("request fail message=" + message);
+                initFloorPop();
             }
         });
     }
