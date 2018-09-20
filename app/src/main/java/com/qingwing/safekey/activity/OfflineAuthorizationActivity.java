@@ -257,6 +257,8 @@ public class OfflineAuthorizationActivity extends BaseActivity implements Observ
                 });
                 break;
             case R.id.offline_authory_send:
+                orderHashMap.clear();
+                orderKeyVector.clear();
                 switch (settleRg.getCheckedRadioButtonId()){
                     case R.id.offline_authory_settle_type_1:
                         AffirmDialog warnDialog = new AffirmDialog(OfflineAuthorizationActivity.this, "确定添加密码授权？", new DialogCallBack() {

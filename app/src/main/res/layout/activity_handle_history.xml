@@ -12,6 +12,12 @@
         app:titleName="记录列表"
         app:titleTextColor="@color/white" />
 
+    <include layout="@layout/list_handle_history_item" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/line_color" />
 
     <com.qingwing.safekey.view.RecyclerViewSwipeLayout
         android:layout_width="match_parent"

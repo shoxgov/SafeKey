@@ -221,7 +221,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
         } else if (person.getSqtype().equals("3")) {
             type = "卡片";
         }
-        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode() + "\n授权类型：" + type;
+        final String info = "姓名：" + person.getPersonname() + "    学号：" + person.getPersoncode()/* + "\n授权类型：" + type*/;
         AffirmDialog warnDialog = new AffirmDialog(OfflineDeleteAuthorizationActivity.this, info, "确认添加", "暂不添加", new DialogCallBack() {
             @Override
             public void OkDown(Object obj) {
@@ -248,7 +248,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
             } else if (aui.getSqtype().equals("3")) {
                 type = "卡片";
             }
-            items[i] = "姓名：" + aui.getPersonname() + "  学号：" + aui.getPersoncode() + "\n授权类型：" + type;
+            items[i] = "姓名：" + aui.getPersonname() + "  学号：" + aui.getPersoncode()/* + "\n授权类型：" + type*/;
             i++;
         }
         AlertDialog.Builder listDialog =
@@ -356,6 +356,8 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
                 break;
 
             case R.id.offline_del_send:
+                orderHashMap.clear();
+                orderKeyVector.clear();
                 switch (settleRg.getCheckedRadioButtonId()) {//"1（密码）/2（指纹）/3（卡片）",
                     case R.id.offline_del_settle_type_1:
                         obtainPwdOrCardInfo("1");
@@ -461,7 +463,7 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
 //                            if (temp.size() == 1) {
 //                                sendDelPwdModel(temp);
 //                            } else {
-                            multiChoiceItem(temp);
+                            multiChoiceItem(type, temp);
 //                            }
                         } else {
                             ToastUtil.showText(odi.getErrMsg());
@@ -489,14 +491,28 @@ public class OfflineDeleteAuthorizationActivity extends BaseActivity implements 
 
     private String selectItems = "";
 
-    private void multiChoiceItem(final List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> data) {
+    private void multiChoiceItem(String type, final List<OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo> data) {
         selectItems = "";
+        String info;
         List<String> itemData = new ArrayList<>();
-        for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo di : data) {
-            itemData.add("密码:" + di.getSqcode() + "\n" + "时间:" + di.getSqdate().replace(".0", ""));
+        if (type.equals("3")) {
+            info = "请选择要删除的卡片";
+            for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo di : data) {
+                itemData.add("姓名:" + di.getPersonname() + "\n" + "卡号:" + di.getSqcode());
+            }
+        } else {
+            info = "请选择要删除的密码";
+            for (OfflineDelAuthoryUserInfoResponse.DelAuthoryUserInfo di : data) {
+                itemData.add("密码:" + di.getSqcode()/* + "\n" + "时间:" + di.getSqdate().replace(".0", "")*/);
+            }
         }
-        AlertDialog dialog = new AlertDialog.Builder(OfflineDeleteAuthorizationActivity.this).setTitle("请选择要删除的密码").setIcon(R.mipmap.ic_launcher)
-                .setNegativeButton("取消", null).setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        AlertDialog dialog = new AlertDialog.Builder(OfflineDeleteAuthorizationActivity.this).setTitle(info).setIcon(R.mipmap.ic_launcher)
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        WaitTool.dismissDialog();
+                    }
+                }).setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         LogUtil.d("selectItems=" + selectItems);

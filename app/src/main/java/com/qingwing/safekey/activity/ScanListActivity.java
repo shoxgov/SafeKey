@@ -282,7 +282,7 @@ public class ScanListActivity extends BaseActivity implements Observer {
                 history.setClass(ScanListActivity.this, HandleHistoryActivity.class);
                 history.putExtra("selectHouseId", selectHouseId);
                 history.putExtra("selectFloorId", selectFloorId);
-                history.putExtra("selectDeviceType", selectDeviceType);
+                history.putExtra("selectDeviceType", "1");//selectDeviceType);
                 history.putExtra("selectDeviceId", selectDeviceId);
                 startActivity(history);
             }

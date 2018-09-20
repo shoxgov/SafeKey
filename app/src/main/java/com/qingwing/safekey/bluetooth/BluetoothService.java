@@ -36,6 +36,7 @@ import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BluetoothService extends Service {
     private static final String TAG = BluetoothService.class.getSimpleName();
@@ -91,6 +92,14 @@ public class BluetoothService extends Service {
      * 发送蓝牙指令缓冲器
      */
     private Vector<String> receiverBleData = new Vector<String>();
+    /**
+     * 是否正在发送指令
+     */
+    private AtomicBoolean runingCommand = new AtomicBoolean(false);
+    /**
+     * 指令是否发送成功
+     */
+    private AtomicBoolean writeSuccess = new AtomicBoolean(false);
 
 
     public List<BtDeviceInfo> getBtScanMap() {
@@ -180,9 +189,13 @@ public class BluetoothService extends Service {
                     @Override
                     public void run() {
                         try {
+                            if (runingCommand.get()) {
+                                return;
+                            }
                             writeCommandToBle();
                         } catch (Exception e) {
                             e.printStackTrace();
+                            runingCommand.set(false);
                         }
                     }
                 }, 100, 750, TimeUnit.MILLISECONDS);//表示延迟100微秒后每750微秒执行一次。
@@ -491,7 +504,8 @@ public class BluetoothService extends Service {
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                LogUtil.d("BLE- write success :" +  BlueDeviceUtils.binaryToHexString(characteristic.getValue()));
+                writeSuccess.set(true);
+                LogUtil.d("BLE- write success :" + BlueDeviceUtils.binaryToHexString(characteristic.getValue()));
             } else {
                 LogUtil.d("BLE- read  fail status=" + status);
             }
@@ -520,6 +534,7 @@ public class BluetoothService extends Service {
             LogUtil.d(TAG + " writeCommandToBle dataCharacterstic = null");
             return;
         }
+        runingCommand.set(true);
         String command = writeCommand.remove(0).toUpperCase();
 //        LogUtil.d(TAG + " obtain command=" + command);
         //////////////////
@@ -530,26 +545,63 @@ public class BluetoothService extends Service {
         if (total > MAXLENGTH) {
             int count = total / MAXLENGTH;
             int yu = total % MAXLENGTH;
-            for (int i = 0; i < count; i++) {
-                byte[] range = Arrays.copyOfRange(encryption, MAXLENGTH * i, (i + 1) * MAXLENGTH);
+            int failCount = 0;
+            writeSuccess.set(false);
+            for (int i = 0; i <= count; ) {
                 try {
+                    if (writeSuccess.get()) {
+                        i++;
+                        if (i == count) {
+                            if (yu <= 0) {
+                                break;
+                            }
+                            byte[] range1 = Arrays.copyOfRange(encryption, total - yu, total);
+                            writeSuccess.set(false);
+                            dataCharacterstic.setValue(range1);
+                            mBluetoothGatt.writeCharacteristic(dataCharacterstic);
+                            LogUtil.d(TAG + "写入大于最后的"+i+"轮总共 " + total + " 字节的数据");
+                            TimeUnit.MILLISECONDS.sleep(220);
+                            continue;
+                        } else if (i == count + 1) {
+                            break;
+                        }
+                    } else {
+                        failCount++;
+                        if (i != 0) {
+                            LogUtil.d(TAG + "写入失败，重写");
+                        } else if (i == count) {
+                            byte[] range1 = Arrays.copyOfRange(encryption, total - yu, total);
+                            writeSuccess.set(false);
+                            dataCharacterstic.setValue(range1);
+                            mBluetoothGatt.writeCharacteristic(dataCharacterstic);
+                            LogUtil.d(TAG + "写入大于最后的"+i+"轮总共 " + total + " 字节的数据");
+                            TimeUnit.MILLISECONDS.sleep(220);
+                            continue;
+                        }
+                        if (failCount >= 3) {
+                            failCount = 0;
+                            i++;
+                            if (i == count + 1) {
+                                break;
+                            }
+                        }
+                    }
+                    byte[] range = Arrays.copyOfRange(encryption, MAXLENGTH * i, (i + 1) * MAXLENGTH);
+                    writeSuccess.set(false);
                     dataCharacterstic.setValue(range);
                     mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-                    TimeUnit.MILLISECONDS.sleep(200);
+                    LogUtil.d(TAG + "分割传送大于" + MAXLENGTH + "字节的数据 第" + i + "轮");
+                    TimeUnit.MILLISECONDS.sleep(220);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    LogUtil.d(TAG + "第" + i + "轮异常：" + e.getStackTrace().toString());
+                    LogUtil.d(TAG + "异常：" + e.getStackTrace().toString());
                 }
-                LogUtil.d(TAG + "分割传送大于" + MAXLENGTH + "字节的数据 第" + i + "轮");
             }
-            byte[] range1 = Arrays.copyOfRange(encryption, total - yu, total);
-            dataCharacterstic.setValue(range1);
-            mBluetoothGatt.writeCharacteristic(dataCharacterstic);
-            LogUtil.d(TAG + "写入大于 " + total + " 字节的数据成功了");
         } else {
             dataCharacterstic.setValue(encryption);
             mBluetoothGatt.writeCharacteristic(dataCharacterstic);
         }
+        runingCommand.set(false);
     }
 
     /**

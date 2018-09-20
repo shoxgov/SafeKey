@@ -86,8 +86,8 @@ public class HandleHistoryActivity extends BaseActivity {
         recyclerSwipeLayout.createAdapter(R.layout.list_handle_history_item, false);
         recyclerSwipeLayout.setOnLoadMoreListener(quickAdapterListener);
         recyclerSwipeLayout.setXCallBack(callBack);
-        View head = LayoutInflater.from(this).inflate(R.layout.list_handle_history_item, null, false);
-        recyclerSwipeLayout.addHeaderView(head);
+//        View head = LayoutInflater.from(this).inflate(R.layout.list_handle_history_item, null, false);
+//        recyclerSwipeLayout.addHeaderView(head);
     }
 
     /**

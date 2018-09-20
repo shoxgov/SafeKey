@@ -398,13 +398,17 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                 break;
             //接收离线上传记录
             case BleObserverConstance.RECEIVER_OFFLINE_UPLOAD_RECORD:
+                final boolean show;
                 if (ob.getObject().toString().subSequence(40, 44).equals("0000") && ob.getObject().toString().substring(44, 46).equals("00")) {
-                    ToastUtil.showText("没有可上传记录信息");
+//                    ToastUtil.showText("没有可上传记录信息");
 //                    recordInfo.append("没有可上传记录信息\n");
-                    refreshLogView("没有可上传记录信息\n");
+                    refreshLogView("无记录信息\n");
 //                    infoEdit.setText(recordInfo.toString());
-                    WaitTool.dismissDialog();
-                    return;
+//                    WaitTool.dismissDialog();
+//                    return;
+                    show = false;
+                } else {
+                    show = true;
                 }
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("token", SKApplication.loginToken);
@@ -418,9 +422,11 @@ public class BtHandleActivity extends BaseActivity implements Observer {
                         UploadRecordResultResponse urrr = (UploadRecordResultResponse) br;
                         WaitTool.dismissDialog();
                         if (urrr.getErrCode() == 0) {
-                            ToastUtil.showText("离线上传记录成功");
+                            if (show) {
+                                ToastUtil.showText("离线上传记录成功");
 //                            recordInfo.append("离线上传记录成功\n");
-                            infoEdit.setText("离线上传记录成功\n");
+                                refreshLogView("离线上传记录成功\n");
+                            }
                             Intent intent = new Intent(BluetoothService.ACTION_GATT_WRITE_COMMAND);
                             intent.putExtra(BluetoothService.WRITE_COMMAND_VALUE, urrr.getResultOrder());
                             sendBroadcast(intent);
